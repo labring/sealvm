@@ -1,0 +1,63 @@
+write_files:
+- content: |
+    export https_proxy=http://192.168.64.1:7890 http_proxy=http://192.168.64.1:7890 all_proxy=socks5://192.168.64.1:7890
+    export no_proxy=localhost,127.0.0.1,localaddress,.localdomain.com,apiserver.cluster.local,192.168.0.0/16
+    echo -e "已开启代理"
+  path: /usr/bin/proxy_on
+  permissions: '0755'
+- content: |
+    unset http_proxy
+    unset https_proxy
+    unset ftp_proxy
+    unset rsync_proxy
+    echo -e "已关闭代理"
+  path: /usr/bin/proxy_off
+  permissions: '0755'
+- content: |
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    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
+    YWwBAg==
+    -----END OPENSSH PRIVATE KEY-----
+  path: /root/.ssh/id_rsa
+  permissions: '0600'
+
+runcmd:
+  - echo "deb [trusted=yes] https://apt.fury.io/labring/ /" | tee /etc/apt/sources.list.d/labring.list  
+  - echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDI9rCN7QPWiddf993ekeqeUlXPopN1I1mYro1oysDWF0ffRL1wiX+6oDSo0UCf/G3iQAb1Zs43C8PzlgE+RsCpj6tInVqjAQThYNrVB3WTbDSma43aNnTj9VElIpQog8htynA9smLAJiC+Hu9qror9tSSAXRIvGlK5q0Ju/U4BNDbPnVn1NT2Y9mpGhuEeTLFmd4eYgpYjtt9d4vGmbIlIZy2TMJ0cNlXbBDocHXYc59qwey9CnLzyoNbQeHjqgDK6SjKFKD/lRCxqP9QsUTI7KAuoAF/SMwxmVam5cazIlPSih7grRauKe82djavKveN4DPbofsn5sCzQ7thgjfXX2hVMmUVqHqUHflzbzvafpnC/3pxeXCrJnP2+gi0fPCgX4kY+grTLxKXQGJuRNBYZCO1xk+i5VA432X1aqR20H0gJRKY7eBlMX8AIwIVtam+VUveogRGOyvuVopQOZOmV/jiEr1e239ALezyAhwhBm2PPmBhXQwsO5SnKp/SkRkM= cuisongliu@cuisongliudeMacBook-Pro.local" >> /root/.ssh/authorized_keys
+  - sudo apt-get update
+  - sudo apt-get -y upgrade
