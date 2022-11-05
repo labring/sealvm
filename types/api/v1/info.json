@@ -1,0 +1,41 @@
+{
+  "errors": [
+  ],
+  "info": {
+    "sealos-dev": {
+      "disks": {
+        "sda1": {
+          "total": "103865303040",
+          "used": "4165853184"
+        }
+      },
+      "image_hash": "4d8d5b95082ed3551cf06b086b854b99d2025c903d1936c35ef34e173c57a817",
+      "image_release": "22.04 LTS",
+      "ipv4": [
+        "192.168.64.23"
+      ],
+      "load": [
+        0,
+        0,
+        0
+      ],
+      "memory": {
+        "total": 4114726912,
+        "used": 258224128
+      },
+      "mounts": {
+        "/root/go/src/github.com": {
+          "gid_mappings": [
+            "0:default"
+          ],
+          "source_path": "/Users/cuisongliu/Workspaces/go/src/github.com",
+          "uid_mappings": [
+            "0:default"
+          ]
+        }
+      },
+      "release": "Ubuntu 22.04.1 LTS",
+      "state": "Running"
+    }
+  }
+}

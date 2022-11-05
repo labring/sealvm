@@ -13,18 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package cmd
 
 import (
 	"fmt"
+	"github.com/cuisongliu/sealos-dev/pkg/configs"
+	"github.com/cuisongliu/sealos-dev/pkg/utils/file"
+	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
 	"github.com/spf13/cobra"
 	"os"
-
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
+	"path"
 )
 
-var cfgFile string
+var (
+	debug          bool
+	clusterRootDir string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -51,41 +56,21 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(onBootOnDie)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sealos-dev.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logger")
+	rootCmd.PersistentFlags().StringVar(&clusterRootDir, "cluster-root", path.Join(file.GetHomeDir(), ".sealos-vm"), "cluster root directory")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Search config in home directory with name ".sealos-dev" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".sealos-dev")
+func onBootOnDie() {
+	configs.DefaultClusterRootfsDir = clusterRootDir
+	var rootDirs = []string{
+		path.Join(clusterRootDir, "logs"),
+		path.Join(clusterRootDir, "etc"),
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := file.MkDirs(rootDirs...); err != nil {
+		logger.Error(err)
+		panic(1)
 	}
+	logger.CfgConsoleAndFileLogger(debug, path.Join(clusterRootDir, "logs"), "sealos-dev", false)
 }

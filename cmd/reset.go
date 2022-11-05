@@ -16,22 +16,36 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"github.com/cuisongliu/sealos-dev/pkg/apply"
+	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/spf13/cobra"
 )
 
 // resetCmd represents the reset command
-var resetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "A brief description of your command",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("reset called")
-	},
+func newResetCmd() *cobra.Command {
+	vm := v1.VirtualMachine{}
+	var resetCmd = &cobra.Command{
+		Use:   "reset",
+		Short: "A brief description of your command",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			applier, err := apply.NewApplierFromArgs(&vm)
+			if err != nil {
+				return err
+			}
+			return applier.Apply()
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			t := metav1.Now()
+			vm.DeletionTimestamp = &t
+		},
+	}
+	resetCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
+	return resetCmd
 }
-
 func init() {
-	rootCmd.AddCommand(resetCmd)
+	rootCmd.AddCommand(newResetCmd())
 
 	// Here you will define your flags and configuration settings.
 

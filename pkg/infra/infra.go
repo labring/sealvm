@@ -16,6 +16,39 @@ limitations under the License.
 
 package infra
 
+import (
+	"fmt"
+	"github.com/cuisongliu/sealos-dev/pkg/configs"
+	"github.com/cuisongliu/sealos-dev/pkg/infra/mulitipass"
+	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+)
+
 type Interface interface {
 	Apply() error
+}
+
+func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (Interface, error) {
+	if infra.Spec.Type != v1.MultipassType {
+		return nil, fmt.Errorf("infra type %s is not supported", infra.Spec.Type)
+	}
+	return newMultiPassVirtualMachine(infra, cf)
+}
+
+func newMultiPassVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (Interface, error) {
+	if infra.Name == "" {
+		return nil, fmt.Errorf("infra name cannot be empty")
+	}
+	if cf == nil {
+		cf = configs.NewVirtualMachineFile(infra.Name)
+	}
+	err := cf.Process()
+	if !infra.CreationTimestamp.IsZero() && err != nil {
+		return nil, err
+	}
+
+	return &mulitipass.MultiPassVirtualMachine{
+		Desired: infra,
+		Current: cf.GetVirtualMachine(),
+		Config:  cf,
+	}, nil
 }
