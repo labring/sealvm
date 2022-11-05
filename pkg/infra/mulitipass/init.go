@@ -147,12 +147,14 @@ func (r *MultiPassVirtualMachine) TransferSSHKey(infra *v1.VirtualMachine) {
 
 	eg, _ := errgroup.WithContext(context.Background())
 
-	for index, host := range infra.Spec.Hosts {
-		dHost := host
-		i := index
-		eg.Go(func() error {
-			return r.Transfer(infra, &dHost, i)
-		})
+	for _, host := range infra.Spec.Hosts {
+		for i := 0; i < host.Count; i++ {
+			dHost := host
+			index := i
+			eg.Go(func() error {
+				return r.Transfer(infra, &dHost, index)
+			})
+		}
 	}
 	if err := eg.Wait(); err != nil {
 		v1.SetConditionError(configCondition, "TransferSSHKeyError", err)
@@ -177,16 +179,19 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 	//	return
 	//}
 	var status []v1.VirtualMachineHostStatus
-	for index, host := range infra.Spec.Hosts {
-		info, err := r.Inspect(infra.Name, host.Role, index)
-		if err != nil {
-			v1.SetConditionError(configCondition, "GetVM", err)
-			continue
+	for _, host := range infra.Spec.Hosts {
+		for i := 0; i < host.Count; i++ {
+			info, err := r.Inspect(infra.Name, host.Role, i)
+			if err != nil {
+				v1.SetConditionError(configCondition, "GetVM", err)
+				continue
+			}
+			if info.State != "Running" {
+				v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
+			}
+			status = append(status, *info)
 		}
-		if info.State != "Running" {
-			v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
-		}
-		status = append(status, *info)
+
 	}
 	infra.Status.Hosts = status
 }
