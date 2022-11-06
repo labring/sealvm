@@ -40,6 +40,7 @@ func (r *MultiPassVirtualMachine) init() {
 		r.ApplyConfig,
 		r.ApplyVMs,
 		//r.TransferSSHKey,
+		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
 		r.FinalStatus,
@@ -135,26 +136,20 @@ func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
 	}
 }
 
-func (r *MultiPassVirtualMachine) TransferSSHKey(infra *v1.VirtualMachine) {
+func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
 	if !v1.IsConditionsTrue(infra.Status.Conditions) {
-		logger.Info("Skip to exec TransferSSHKey:", r.Desired.Name)
+		logger.Info("Skip to exec MountsVMs:", r.Desired.Name)
 		return
 	}
-	logger.Info("Start to exec TransferSSHKey:", r.Desired.Name)
+	logger.Info("Start to exec MountsVMs:", r.Desired.Name)
 	var configCondition = &v1.Condition{
-		Type:              "TransferSSHKey",
+		Type:              "MountsVMs",
 		Status:            v12.ConditionTrue,
-		Reason:            "TransferSSHKey to instance",
-		Message:           "transfer multipass success",
+		Reason:            "MountsVMs to instance",
+		Message:           "mount multipass success",
 		LastHeartbeatTime: metav1.Now(),
 	}
 	defer r.saveCondition(infra, configCondition)
-
-	//sshClient, sshErr := ssh.NewSSHByVirtualMachine(infra, true)
-	//if sshErr != nil {
-	//	v1.SetConditionError(configCondition, "GetSSH", sshErr)
-	//	return
-	//}
 
 	eg, _ := errgroup.WithContext(context.Background())
 
@@ -163,7 +158,13 @@ func (r *MultiPassVirtualMachine) TransferSSHKey(infra *v1.VirtualMachine) {
 			dHost := host
 			index := i
 			eg.Go(func() error {
-				return r.Transfer(infra, &dHost, index)
+				id := fmt.Sprintf("%s-%s-%d", infra.Name, dHost.Role, index)
+				if host.Mounts != nil {
+					for h, m := range host.Mounts {
+						_ = exec.Cmd("bash", "-c", fmt.Sprintf("multipass mount %s %s:%s", h, id, m))
+					}
+				}
+				return nil
 			})
 		}
 	}
@@ -225,21 +226,16 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 		LastHeartbeatTime: metav1.Now(),
 	}
 	defer r.saveCondition(infra, configCondition)
-
-	sshClient, sshErr := ssh.NewSSHByVirtualMachine(infra, true)
-	if sshErr != nil {
-		v1.SetConditionError(configCondition, "GetSSH", sshErr)
-		return
-	}
+	client := ssh.NewSSHClient(&infra.Spec.SSH, true)
 	var ips []string
 	for _, host := range infra.Status.Hosts {
 		if host.State != "Running" {
 			v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
 			continue
 		}
-		ips = append(ips, host.IPs[0])
+		ips = append(ips, host.IPs...)
 	}
-	err := ssh.WaitSSHReady(sshClient, 6, ips...)
+	err := ssh.WaitSSHReady(client, 6, ips...)
 	if err != nil {
 		v1.SetConditionError(configCondition, "PingVMs", err)
 		return
@@ -253,19 +249,6 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 	}
 	cmd := fmt.Sprintf("multipass launch --name %s-%s-%d --cpus %d --mem %dG --disk %dG --cloud-init %s", infra.Name, host.Role, index, host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg)
 	return exec.Cmd("bash", "-c", cmd)
-}
-
-func (r *MultiPassVirtualMachine) Transfer(infra *v1.VirtualMachine, host *v1.Host, index int) error {
-	var cmds []string
-	cmds = append(cmds, fmt.Sprintf("multipass transfer %s %s-%s-%d:/home/ubuntu/", infra.Spec.SSH.PkFile, infra.Name, host.Role, index))
-	cmds = append(cmds, fmt.Sprintf("multipass transfer %s %s-%s-%d:/home/ubuntu/", infra.Spec.SSH.PublicFile, infra.Name, host.Role, index))
-	cmds = append(cmds, fmt.Sprintf("multipass exec %s-%s-%d -- sudo -u root rm -rf ~/.ssh && mkdir ~/.ssh &&  cp -r /home/ubuntu/id_rsa ~/.ssh/id_rsa && cp -r /home/ubuntu/id_rsa.pub ~/.ssh/id_rsa.pub && chmod 600 ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys", infra.Name, host.Role, index))
-	for _, cmd := range cmds {
-		if err := exec.Cmd("bash", "-c", cmd); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (r *MultiPassVirtualMachine) FinalStatus(infra *v1.VirtualMachine) {

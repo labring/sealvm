@@ -75,8 +75,8 @@ const GolangTpl Tpl = `write_files:
     bash /etc/profile.d/golang.sh
   path: /usr/bin/golang-init
   permissions: '0755' 
-- runcmd:
-    - echo "{{ .PublicKeyBase64 }}" | base64 -d  >> /root/.ssh/authorized_keys
-    - echo "{{ .PrivateKeyBase64 }}" | base64 -d > /root/.ssh/id_rsa
-    - chmod 600 /root/.ssh/id_rsa
+runcmd:
+  - echo "{{ .PublicKeyBase64 }}" | base64 -d  >> /root/.ssh/authorized_keys
+  - echo "{{ .PrivateKeyBase64 }}" | base64 -d > /root/.ssh/id_rsa
+  - chmod 600 /root/.ssh/id_rsa
 `
