@@ -19,9 +19,9 @@ package configs
 import (
 	"bytes"
 	"errors"
-	fileutil "github.com/cuisongliu/sealos-dev/pkg/utils/file"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
-	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"path"

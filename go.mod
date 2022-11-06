@@ -1,4 +1,4 @@
-module github.com/cuisongliu/sealos-dev
+module github.com/labring/sealos-vm
 
 go 1.19
 

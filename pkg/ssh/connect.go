@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/iputils"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/iputils"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 
 	"golang.org/x/crypto/ssh"
 )

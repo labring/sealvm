@@ -23,7 +23,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 )
 
 // use only one

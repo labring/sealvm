@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/file"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/hash"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/iputils"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/progress"
+	"github.com/labring/sealos-vm/pkg/utils/file"
+	"github.com/labring/sealos-vm/pkg/utils/hash"
+	"github.com/labring/sealos-vm/pkg/utils/iputils"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/progress"
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"

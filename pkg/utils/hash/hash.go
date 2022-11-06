@@ -23,7 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 
 	"github.com/davecgh/go-spew/spew"
 )

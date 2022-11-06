@@ -22,10 +22,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/iputils"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/iputils"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 
-	"github.com/cuisongliu/sealos-dev/types/api/v1"
+	"github.com/labring/sealos-vm/types/api/v1"
 )
 
 type Interface interface {

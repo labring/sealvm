@@ -18,11 +18,11 @@ package apply
 
 import (
 	"fmt"
-	"github.com/cuisongliu/sealos-dev/pkg/configs"
-	"github.com/cuisongliu/sealos-dev/pkg/infra"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
-	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
 	"github.com/imdario/mergo"
+	"github.com/labring/sealos-vm/pkg/configs"
+	"github.com/labring/sealos-vm/pkg/infra"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 )
 
 func NewApplierFromArgs(args *v1.VirtualMachine) (infra.Interface, error) {

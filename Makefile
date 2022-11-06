@@ -24,7 +24,7 @@ endif
 
 
 HEAD_FILE := hack/boilerplate.go.txt
-INPUT_DIR := github.com/cuisongliu/sealos-dev/types/api
+INPUT_DIR := github.com/labring/sealos-vm/types/api
 deepcopy:install-deepcopy-gen
 	$(DEEPCOPY_BIN) \
       --input-dirs="$(INPUT_DIR)/v1" \

@@ -19,10 +19,10 @@ package ssh
 import (
 	"context"
 	"fmt"
-	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 	"strings"
 
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 
 	"golang.org/x/sync/errgroup"
 )

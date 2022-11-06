@@ -18,10 +18,10 @@ package infra
 
 import (
 	"fmt"
-	"github.com/cuisongliu/sealos-dev/pkg/configs"
-	"github.com/cuisongliu/sealos-dev/pkg/infra/mulitipass"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
-	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	"github.com/labring/sealos-vm/pkg/configs"
+	"github.com/labring/sealos-vm/pkg/infra/mulitipass"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

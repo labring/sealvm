@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/cuisongliu/sealos-dev/pkg/apply"
-	fileutil "github.com/cuisongliu/sealos-dev/pkg/utils/file"
-	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	"github.com/labring/sealos-vm/pkg/apply"
+	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 	"github.com/spf13/cobra"
 	"os"
 	"path"

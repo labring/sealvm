@@ -18,8 +18,8 @@ package tmpl
 
 import (
 	"bytes"
-	fileutil "github.com/cuisongliu/sealos-dev/pkg/utils/file"
-	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
+	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
 	"html/template"
 	"os"
 	"runtime"

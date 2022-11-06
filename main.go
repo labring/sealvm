@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/cuisongliu/sealos-dev/cmd"
+import "github.com/labring/sealos-vm/cmd"
 
 func main() {
 	cmd.Execute()
