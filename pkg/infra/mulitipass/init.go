@@ -37,7 +37,7 @@ func (r *MultiPassVirtualMachine) init() {
 		r.InitStatus,
 		r.ApplyConfig,
 		r.ApplyVMs,
-		r.TransferSSHKey,
+		//r.TransferSSHKey,
 		r.SyncVMs,
 		r.FinalStatus,
 	}

@@ -106,9 +106,9 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
 	runCmd.Flags().IntVarP(&masters, "masters", "m", 1, "number of masters")
-	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 1, "number of nodes")
-	runCmd.Flags().IntVarP(&registry, "registry", "r", 1, "number of registry")
-	runCmd.Flags().BoolVarP(&dev, "dev", "d", true, "number of dev")
+	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
+	runCmd.Flags().IntVarP(&registry, "registry", "r", 0, "number of registry")
+	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
 	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", path.Join(os.Getenv("GOPATH"), "src"), "gopath src dir")
 	return runCmd
 }

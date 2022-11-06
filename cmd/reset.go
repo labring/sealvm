@@ -42,6 +42,7 @@ func newResetCmd() *cobra.Command {
 		},
 	}
 	resetCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
+	resetCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	return resetCmd
 }
 func init() {

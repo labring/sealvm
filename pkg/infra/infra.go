@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"github.com/cuisongliu/sealos-dev/pkg/configs"
 	"github.com/cuisongliu/sealos-dev/pkg/infra/mulitipass"
+	"github.com/cuisongliu/sealos-dev/pkg/utils/logger"
 	v1 "github.com/cuisongliu/sealos-dev/types/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Interface interface {
@@ -30,6 +32,11 @@ type Interface interface {
 func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (Interface, error) {
 	if infra.Spec.Type != v1.MultipassType {
 		return nil, fmt.Errorf("infra type %s is not supported", infra.Spec.Type)
+	}
+	if !infra.DeletionTimestamp.IsZero() && infra.CreationTimestamp.IsZero() {
+		logger.Debug("fix VirtualMachine creationTimestamp")
+		t := metav1.Now()
+		infra.CreationTimestamp = t
 	}
 	return newMultiPassVirtualMachine(infra, cf)
 }

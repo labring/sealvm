@@ -34,9 +34,10 @@ func NewApplierFromArgs(args *v1.VirtualMachine) (infra.Interface, error) {
 	}
 	i := cf.GetVirtualMachine()
 	if i == nil {
-		logger.Debug("creating new cluster")
+		logger.Debug("current VirtualMachine is nil")
 		i = initVirtualMachine(name)
 	}
+
 	if err := mergo.Merge(i, args); err != nil {
 		return nil, fmt.Errorf("merge: %v", err)
 	}
