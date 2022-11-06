@@ -36,9 +36,13 @@ func newResetCmd() *cobra.Command {
 			}
 			return applier.Apply()
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := checkInstall(vm.Spec.Type); err != nil {
+				return err
+			}
 			t := metav1.Now()
 			vm.DeletionTimestamp = &t
+			return nil
 		},
 	}
 	resetCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")

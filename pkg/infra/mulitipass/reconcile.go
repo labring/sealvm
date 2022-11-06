@@ -37,6 +37,9 @@ func (r *MultiPassVirtualMachine) reconcile() {
 	pipelines := []func(infra *v1.VirtualMachine){
 		r.InitStatus,
 		r.ApplyConfig,
+		r.SyncVMs,
+		r.PingVms,
+		r.FinalStatus,
 	}
 	if !r.Desired.DeletionTimestamp.IsZero() {
 		pipelines = []func(infra *v1.VirtualMachine){

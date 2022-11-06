@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/labring/sealos-vm/pkg/apply"
 	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
+	"github.com/labring/sealos-vm/pkg/utils/maps"
 	v1 "github.com/labring/sealos-vm/types/api/v1"
 	"github.com/spf13/cobra"
 	"os"
@@ -32,6 +33,7 @@ func newRunCmd() *cobra.Command {
 	var masters, nodes, registry int
 	var dev bool
 	var src string
+	var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
 	var runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "A brief description of your command",
@@ -43,14 +45,19 @@ func newRunCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := checkInstall(vm.Spec.Type); err != nil {
+				return err
+			}
 			if dev {
 				if src == "" {
 					return fmt.Errorf("src must be set")
 				}
+				mounts := maps.StringToMap(src, ",")
+
 				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
 					Role:   v1.DEV,
 					Count:  1,
-					Mounts: map[string]string{src: "/root/go/src"},
+					Mounts: mounts,
 					Resources: map[string]int{
 						v1.CPUKey:  2,
 						v1.MEMKey:  4,
@@ -109,7 +116,7 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
 	runCmd.Flags().IntVarP(&registry, "registry", "r", 0, "number of registry")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
-	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", path.Join(os.Getenv("GOPATH"), "src"), "gopath src dir")
+	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
 	return runCmd
 }
 

@@ -18,6 +18,7 @@ package tmpl
 
 import (
 	"bytes"
+	"encoding/base64"
 	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
 	"github.com/labring/sealos-vm/pkg/utils/logger"
 	"html/template"
@@ -58,10 +59,10 @@ func ExecuteNodesToFile(proxy, noProxy, privateKeyFile, publicKeyFile, file stri
 		noProxy = "192.168.0.0/16"
 	}
 	data := map[string]interface{}{
-		"Proxy":      proxy,
-		"NoProxy":    noProxy,
-		"PrivateKey": string(privateKeyFileRead),
-		"PublicKey":  string(publicKeyFileRead),
+		"Proxy":            proxy,
+		"NoProxy":          noProxy,
+		"PrivateKeyBase64": base64.StdEncoding.EncodeToString(privateKeyFileRead),
+		"PublicKeyBase64":  base64.StdEncoding.EncodeToString(publicKeyFileRead),
 	}
 	outString, err := tpl.Execute(data)
 	if err != nil {
@@ -86,12 +87,13 @@ func ExecuteGolangToFile(proxy, noProxy, privateKeyFile, publicKeyFile, file str
 	if noProxy == "" {
 		noProxy = "192.168.0.0/16"
 	}
+
 	data := map[string]interface{}{
-		"Proxy":      proxy,
-		"NoProxy":    noProxy,
-		"PrivateKey": string(privateKeyFileRead),
-		"PublicKey":  string(publicKeyFileRead),
-		"ARCH":       runtime.GOARCH,
+		"Proxy":            proxy,
+		"NoProxy":          noProxy,
+		"PrivateKeyBase64": base64.StdEncoding.EncodeToString(privateKeyFileRead),
+		"PublicKeyBase64":  base64.StdEncoding.EncodeToString(publicKeyFileRead),
+		"ARCH":             runtime.GOARCH,
 	}
 	outString, err := tpl.Execute(data)
 	if err != nil {

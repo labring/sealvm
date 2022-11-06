@@ -40,8 +40,8 @@ const NodesTpl Tpl = `write_files:
   permissions: '0755'
 runcmd:
   - echo "deb [trusted=yes] https://apt.fury.io/labring/ /" | tee /etc/apt/sources.list.d/labring.list
-  - echo "{{ .PublicKey }}" >> /root/.ssh/authorized_keys
-  - echo "{{ .PrivateKeyBase64 }}"| base64 -d >> /root/.ssh/id_rsa
+  - echo "{{ .PublicKeyBase64 }}" | base64 -d >> /root/.ssh/authorized_keys
+  - echo "{{ .PrivateKeyBase64 }}"| base64 -d > /root/.ssh/id_rsa
   - chmod 600 /root/.ssh/id_rsa
 `
 
@@ -76,7 +76,7 @@ const GolangTpl Tpl = `write_files:
   path: /usr/bin/golang-init
   permissions: '0755' 
 - runcmd:
-    - echo "{{ .PublicKey }}" >> /root/.ssh/authorized_keys
-    - echo "{{ .PrivateKeyBase64 }}" | base64 -d >> /root/.ssh/id_rsa
+    - echo "{{ .PublicKeyBase64 }}" | base64 -d  >> /root/.ssh/authorized_keys
+    - echo "{{ .PrivateKeyBase64 }}" | base64 -d > /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/id_rsa
 `

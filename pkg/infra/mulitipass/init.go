@@ -20,8 +20,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/labring/sealos-vm/pkg/configs"
+	"github.com/labring/sealos-vm/pkg/ssh"
 	"github.com/labring/sealos-vm/pkg/tmpl"
 	"github.com/labring/sealos-vm/pkg/utils/exec"
+	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
 	"github.com/labring/sealos-vm/pkg/utils/logger"
 	v1 "github.com/labring/sealos-vm/types/api/v1"
 	"golang.org/x/sync/errgroup"
@@ -39,6 +41,7 @@ func (r *MultiPassVirtualMachine) init() {
 		r.ApplyVMs,
 		//r.TransferSSHKey,
 		r.SyncVMs,
+		r.PingVms,
 		r.FinalStatus,
 	}
 
@@ -52,8 +55,14 @@ func (r *MultiPassVirtualMachine) init() {
 
 }
 
-var defaultNodesYaml = path.Join(configs.DefaultRootfsDir(), "etc", "nodes.yaml")
-var defaultGolangYaml = path.Join(configs.DefaultRootfsDir(), "etc", "golang.yaml")
+func GetNodesYaml(clusterName string) string {
+
+	return path.Join(configs.GetEtcDir(clusterName), "nodes.yaml")
+}
+
+func GetGolangYaml(clusterName string) string {
+	return path.Join(configs.GetEtcDir(clusterName), "golang.yaml")
+}
 
 func (r *MultiPassVirtualMachine) InitStatus(infra *v1.VirtualMachine) {
 	logger.Info("Start to exec InitStatus:", r.Desired.Name)
@@ -78,13 +87,15 @@ func (r *MultiPassVirtualMachine) ApplyConfig(infra *v1.VirtualMachine) {
 		LastHeartbeatTime: metav1.Now(),
 	}
 	defer r.saveCondition(infra, configCondition)
-
-	if err := tmpl.ExecuteNodesToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, defaultNodesYaml); err != nil {
+	if !fileutil.IsExist(configs.GetDataDir(infra.Name)) {
+		_ = fileutil.MkDirs(configs.GetDataDir(infra.Name))
+	}
+	if err := tmpl.ExecuteNodesToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetNodesYaml(infra.Name)); err != nil {
 		v1.SetConditionError(configCondition, "ConfigNodeGenerateError", err)
 		return
 	}
 
-	if err := tmpl.ExecuteGolangToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, defaultGolangYaml); err != nil {
+	if err := tmpl.ExecuteGolangToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetGolangYaml(infra.Name)); err != nil {
 		v1.SetConditionError(configCondition, "ConfigGolangGenerateError", err)
 	}
 }
@@ -163,6 +174,10 @@ func (r *MultiPassVirtualMachine) TransferSSHKey(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
+	if !v1.IsConditionsTrue(infra.Status.Conditions) {
+		logger.Info("Skip to exec SyncVMs:", r.Desired.Name)
+		return
+	}
 	logger.Info("Start to exec SyncVMs:", r.Desired.Name)
 	var configCondition = &v1.Condition{
 		Type:              "SyncVMs",
@@ -196,10 +211,45 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 	infra.Status.Hosts = status
 }
 
+func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
+	if !v1.IsConditionsTrue(infra.Status.Conditions) {
+		logger.Info("Skip to exec PingVms:", r.Desired.Name)
+		return
+	}
+	logger.Info("Start to exec PingVms:", r.Desired.Name)
+	var configCondition = &v1.Condition{
+		Type:              "PingVms",
+		Status:            v12.ConditionTrue,
+		Reason:            "VM ssh ping",
+		Message:           "multipass instance ssh ping success",
+		LastHeartbeatTime: metav1.Now(),
+	}
+	defer r.saveCondition(infra, configCondition)
+
+	sshClient, sshErr := ssh.NewSSHByVirtualMachine(infra, true)
+	if sshErr != nil {
+		v1.SetConditionError(configCondition, "GetSSH", sshErr)
+		return
+	}
+	var ips []string
+	for _, host := range infra.Status.Hosts {
+		if host.State != "Running" {
+			v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
+			continue
+		}
+		ips = append(ips, host.IPs[0])
+	}
+	err := ssh.WaitSSHReady(sshClient, 6, ips...)
+	if err != nil {
+		v1.SetConditionError(configCondition, "PingVMs", err)
+		return
+	}
+}
+
 func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error {
-	cfg := defaultNodesYaml
+	cfg := GetNodesYaml(infra.Name)
 	if v1.DEV == host.Role {
-		cfg = defaultGolangYaml
+		cfg = GetGolangYaml(infra.Name)
 	}
 	cmd := fmt.Sprintf("multipass launch --name %s-%s-%d --cpus %d --mem %dG --disk %dG --cloud-init %s", infra.Name, host.Role, index, host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg)
 	return exec.Cmd("bash", "-c", cmd)

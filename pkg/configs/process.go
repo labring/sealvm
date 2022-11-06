@@ -44,8 +44,16 @@ func DefaultRootfsDir() string {
 	return path.Join(home, ".sealos-vm")
 }
 
+func GetDataDir(clusterName string) string {
+	return path.Join(DefaultRootfsDir(), "data", clusterName)
+}
+
+func GetEtcDir(clusterName string) string {
+	return path.Join(DefaultRootfsDir(), "etc", clusterName)
+}
+
 func VirtualMachineFilePath(clusterName string) string {
-	return path.Join(DefaultRootfsDir(), clusterName, "VirtualMachineFile")
+	return path.Join(GetDataDir(clusterName), "VirtualMachineFile")
 }
 
 func (c *VirtualMachineFile) Process() (err error) {

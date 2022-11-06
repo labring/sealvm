@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"path"
+	"runtime"
 )
 
 var (
@@ -63,9 +64,13 @@ func init() {
 }
 
 func onBootOnDie() {
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" {
+		logger.Fatal("only support darwin and windows")
+	}
 	configs.DefaultClusterRootfsDir = clusterRootDir
 	var rootDirs = []string{
 		path.Join(clusterRootDir, "logs"),
+		path.Join(clusterRootDir, "data"),
 		path.Join(clusterRootDir, "etc"),
 	}
 	if err := file.MkDirs(rootDirs...); err != nil {

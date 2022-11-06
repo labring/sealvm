@@ -16,7 +16,19 @@ limitations under the License.
 
 package install
 
+import v1 "github.com/labring/sealos-vm/types/api/v1"
+
+var AutoDownload = true
+
 type Interface interface {
 	Install() error
-	IsInstall() error
+	IsInstall() bool
+}
+
+func NewInstaller(vmType string) Interface {
+	switch vmType {
+	case v1.MultipassType:
+		return &multipass{}
+	}
+	return nil
 }

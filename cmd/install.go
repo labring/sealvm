@@ -18,21 +18,44 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/labring/sealos-vm/pkg/install"
+	"github.com/labring/sealos-vm/pkg/utils/logger"
+	v1 "github.com/labring/sealos-vm/types/api/v1"
 
 	"github.com/spf13/cobra"
 )
 
-// installCmd represents the install command
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "install vm tools, ex Multipass",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("install called")
-	},
+func newInstallCmd() *cobra.Command {
+	var vmType string
+	var installer install.Interface
+	installCmd := &cobra.Command{
+		Use:   "install",
+		Short: "install vm tools",
+		Run: func(cmd *cobra.Command, args []string) {
+			if installer.IsInstall() {
+				logger.Info("kubernetes is installed")
+				return
+			}
+			err := installer.Install()
+			if err != nil {
+				logger.Error(err)
+			}
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			installer = install.NewInstaller(vmType)
+			if installer == nil {
+				return fmt.Errorf("vm type %s not support", vmType)
+			}
+			return nil
+		},
+	}
+	installCmd.Flags().StringVarP(&vmType, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
+	installCmd.Flags().BoolVarP(&install.AutoDownload, "download", "d", true, "auto download vm tools online")
+	return installCmd
 }
 
 func init() {
-	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(newInstallCmd())
 
 	// Here you will define your flags and configuration settings.
 
@@ -43,4 +66,15 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// installCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func checkInstall(vmType string) error {
+	installer := install.NewInstaller(vmType)
+	if installer == nil {
+		return fmt.Errorf("vm type %s not support", vmType)
+	}
+	if !installer.IsInstall() {
+		return fmt.Errorf("vm tools %s is not installed, please use `sealos-vm install` retry", vmType)
+	}
+	return nil
 }
