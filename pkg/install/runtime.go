@@ -14,13 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package runtime
+package install
 
 type Interface interface {
-	Init() error
-	Reset() error
-	JoinNodes(newNodesIPList []string) error
-	DeleteNodes(nodeIPList []string) error
-	JoinMasters(newMastersIPList []string) error
-	DeleteMasters(mastersIPList []string) error
+	Install() error
+	IsInstall() error
 }
