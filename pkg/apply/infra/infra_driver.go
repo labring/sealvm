@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package infra
 
 import (
 	"fmt"
@@ -26,25 +26,30 @@ import (
 	"os"
 )
 
-type MultiPassVirtualMachine struct {
-	Desired *v1.VirtualMachine
-	Current *v1.VirtualMachine
-	Config  configs.Interface
+type Interface interface {
+	Init()
+	Reconcile()
+	DesiredVM() *v1.VirtualMachine
+	CurrentVM() *v1.VirtualMachine
 }
 
-func (c *MultiPassVirtualMachine) Apply() error {
-	if c.Desired.CreationTimestamp.IsZero() {
-		c.init()
-		c.Desired.CreationTimestamp = metav1.Now()
+type driver struct {
+	Infra Interface
+}
+
+func (c *driver) Apply() error {
+	if c.Infra.DesiredVM().CreationTimestamp.IsZero() {
+		c.Infra.Init()
+		c.Infra.DesiredVM().CreationTimestamp = metav1.Now()
 	} else {
-		c.reconcile()
+		c.Infra.Reconcile()
 	}
 	return c.updateCRStatus()
 
 }
 
-func (c *MultiPassVirtualMachine) getWriteBackObjects() []interface{} {
-	obj := []interface{}{c.Desired}
+func (c *driver) getWriteBackObjects() []interface{} {
+	obj := []interface{}{c.Infra.DesiredVM()}
 	//if configs := c.ClusterFile.GetConfigs(); len(configs) > 0 {
 	//	for i := range configs {
 	//		obj = append(obj, configs[i])
@@ -55,10 +60,10 @@ func (c *MultiPassVirtualMachine) getWriteBackObjects() []interface{} {
 
 // todo: atomic updating status after each installation for better reconcile?
 // todo: set up signal handler
-func (c *MultiPassVirtualMachine) updateCRStatus() error {
-	if !c.Desired.DeletionTimestamp.IsZero() {
+func (c *driver) updateCRStatus() error {
+	if !c.Infra.DesiredVM().DeletionTimestamp.IsZero() {
 		t := metav1.Now()
-		cfPath := configs.VirtualMachineFilePath(c.Desired.Name)
+		cfPath := configs.VirtualMachineFilePath(c.Infra.DesiredVM().Name)
 		target := fmt.Sprintf("%s.%d", cfPath, t.Unix())
 		logger.Debug("write reset vm file to local: %s", target)
 		if err := yaml.MarshalYamlToFile(cfPath, c.getWriteBackObjects()...); err != nil {
@@ -67,7 +72,7 @@ func (c *MultiPassVirtualMachine) updateCRStatus() error {
 		_ = os.Rename(cfPath, target)
 		return nil
 	}
-	infraPath := configs.VirtualMachineFilePath(c.Desired.Name)
+	infraPath := configs.VirtualMachineFilePath(c.Infra.DesiredVM().Name)
 	logger.Debug("write cluster file to local storage: %s", infraPath)
 	return yaml.MarshalYamlToFile(infraPath, c.getWriteBackObjects()...)
 }

@@ -18,18 +18,15 @@ package infra
 
 import (
 	"fmt"
+	"github.com/labring/sealos-vm/pkg/apply/infra/mulitipass"
+	"github.com/labring/sealos-vm/pkg/apply/runtime"
 	"github.com/labring/sealos-vm/pkg/configs"
-	"github.com/labring/sealos-vm/pkg/infra/mulitipass"
 	"github.com/labring/sealos-vm/pkg/utils/logger"
 	v1 "github.com/labring/sealos-vm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Interface interface {
-	Apply() error
-}
-
-func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (Interface, error) {
+func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
 	if infra.Spec.Type != v1.MultipassType {
 		return nil, fmt.Errorf("infra type %s is not supported", infra.Spec.Type)
 	}
@@ -38,10 +35,6 @@ func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (I
 		t := metav1.Now()
 		infra.CreationTimestamp = t
 	}
-	return newMultiPassVirtualMachine(infra, cf)
-}
-
-func newMultiPassVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (Interface, error) {
 	if infra.Name == "" {
 		return nil, fmt.Errorf("infra name cannot be empty")
 	}
@@ -52,10 +45,14 @@ func newMultiPassVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) 
 	if !infra.CreationTimestamp.IsZero() && err != nil {
 		return nil, err
 	}
+	return newMultiPassVirtualMachine(infra, cf)
+}
 
-	return &mulitipass.MultiPassVirtualMachine{
+func newMultiPassVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
+	dr := &mulitipass.MultiPassVirtualMachine{
 		Desired: infra,
 		Current: cf.GetVirtualMachine(),
 		Config:  cf,
-	}, nil
+	}
+	return &driver{Infra: dr}, nil
 }

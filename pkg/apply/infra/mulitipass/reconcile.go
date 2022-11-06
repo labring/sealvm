@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-func (r *MultiPassVirtualMachine) reconcile() {
+func (r *MultiPassVirtualMachine) Reconcile() {
 	logger.Info("Start to reconcile a new infra:", r.Desired.Name)
 
 	pipelines := []func(infra *v1.VirtualMachine){

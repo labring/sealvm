@@ -32,7 +32,15 @@ import (
 	"path"
 )
 
-func (r *MultiPassVirtualMachine) init() {
+func (r *MultiPassVirtualMachine) DesiredVM() *v1.VirtualMachine {
+	return r.Desired
+}
+
+func (r *MultiPassVirtualMachine) CurrentVM() *v1.VirtualMachine {
+	return r.Current
+}
+
+func (r *MultiPassVirtualMachine) Init() {
 	logger.Info("Start to create a new infra:", r.Desired.Name)
 
 	pipelines := []func(infra *v1.VirtualMachine){
@@ -247,7 +255,11 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 	if v1.DEV == host.Role {
 		cfg = GetGolangYaml(infra.Name)
 	}
-	cmd := fmt.Sprintf("multipass launch --name %s-%s-%d --cpus %d --mem %dG --disk %dG --cloud-init %s", infra.Name, host.Role, index, host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg)
+	debugFlag := ""
+	if logger.IsDebugMode() {
+		debugFlag = "-vvv"
+	}
+	cmd := fmt.Sprintf("multipass launch --name %s-%s-%d --cpus %d --mem %dG --disk %dG --cloud-init %s %s", infra.Name, host.Role, index, host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag)
 	return exec.Cmd("bash", "-c", cmd)
 }
 

@@ -19,13 +19,14 @@ package apply
 import (
 	"fmt"
 	"github.com/imdario/mergo"
+	"github.com/labring/sealos-vm/pkg/apply/infra"
+	"github.com/labring/sealos-vm/pkg/apply/runtime"
 	"github.com/labring/sealos-vm/pkg/configs"
-	"github.com/labring/sealos-vm/pkg/infra"
 	"github.com/labring/sealos-vm/pkg/utils/logger"
 	v1 "github.com/labring/sealos-vm/types/api/v1"
 )
 
-func NewApplierFromArgs(args *v1.VirtualMachine) (infra.Interface, error) {
+func NewApplierFromArgs(args *v1.VirtualMachine) (runtime.Interface, error) {
 	name := args.Name
 	cf := configs.NewVirtualMachineFile(name)
 	err := cf.Process()

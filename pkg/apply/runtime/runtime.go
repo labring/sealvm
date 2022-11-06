@@ -14,18 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package runtime
 
-import (
-	"testing"
-)
-
-func TestMultiPassVirtualMachine_Get(t *testing.T) {
-	r := &MultiPassVirtualMachine{}
-	err := r.Get("aa", "cc", 1)
-	if err != nil {
-		t.Errorf(err.Error())
-		return
-	}
-	t.Log("xxxx")
+type Interface interface {
+	Apply() error
 }
