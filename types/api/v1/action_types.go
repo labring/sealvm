@@ -20,6 +20,8 @@ import (
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
+	Cmd []string `json:"cmd,omitempty"`
+	On  []string `json:"on,omitempty"`
 }
 
 // ActionStatus defines the observed state of Action

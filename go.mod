@@ -10,7 +10,7 @@ require (
 	github.com/pkg/sftp v1.13.5
 	github.com/schollz/progressbar/v3 v3.12.0
 	github.com/spf13/cobra v1.6.1
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.3
