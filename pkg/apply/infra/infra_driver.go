@@ -48,6 +48,10 @@ func (c *driver) Apply() error {
 
 }
 
+func DiffVirtualMachine(old, new *v1.VirtualMachine) {
+
+}
+
 func (c *driver) getWriteBackObjects() []interface{} {
 	obj := []interface{}{c.Infra.DesiredVM()}
 	//if configs := c.ClusterFile.GetConfigs(); len(configs) > 0 {

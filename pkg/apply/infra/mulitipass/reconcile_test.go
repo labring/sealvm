@@ -17,15 +17,16 @@ limitations under the License.
 package mulitipass
 
 import (
+	"github.com/dustin/go-humanize"
 	"testing"
 )
 
 func TestMultiPassVirtualMachine_Get(t *testing.T) {
-	r := &MultiPassVirtualMachine{}
-	_, err := r.Get("aa", "cc", 1)
-	if err != nil {
-		t.Errorf(err.Error())
-		return
-	}
-	t.Log("xxxx")
+	//r := &MultiPassVirtualMachine{}
+	//_, err := r.Get("aa", "cc", 1)
+	//if err != nil {
+	//	t.Errorf(err.Error())
+	//	return
+	//}
+	t.Log(humanize.Bytes(uint64(1520263168)))
 }

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/dustin/go-humanize"
 	"github.com/labring/sealos-vm/pkg/utils/exec"
 	"github.com/labring/sealos-vm/pkg/utils/logger"
 	v1 "github.com/labring/sealos-vm/types/api/v1"
@@ -29,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
+	"strconv"
 )
 
 func (r *MultiPassVirtualMachine) Reconcile() {
@@ -39,6 +41,7 @@ func (r *MultiPassVirtualMachine) Reconcile() {
 		r.ApplyConfig,
 		r.SyncVMs,
 		r.PingVms,
+		r.DisableInitHosts,
 		r.FinalStatus,
 	}
 	if !r.Desired.DeletionTimestamp.IsZero() {
@@ -105,8 +108,8 @@ func (r *MultiPassVirtualMachine) GetById(name string) (string, error) {
 	return out, nil
 }
 
-func (r *MultiPassVirtualMachine) Inspect(name, role string, index int) (*v1.VirtualMachineHostStatus, error) {
-	info, err := r.Get(name, role, index)
+func (r *MultiPassVirtualMachine) Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
+	info, err := r.Get(name, role.Role, index)
 	if err != nil {
 		return nil, err
 	}
@@ -117,24 +120,35 @@ func (r *MultiPassVirtualMachine) Inspect(name, role string, index int) (*v1.Vir
 	}
 	hostStatus := &v1.VirtualMachineHostStatus{
 		State:     "",
-		Role:      role,
-		ID:        fmt.Sprintf("%s-%s-%d", name, role, index),
+		Role:      role.Role,
+		ID:        fmt.Sprintf("%s-%s-%d", name, role.Role, index),
 		IPs:       nil,
 		ImageID:   "",
 		ImageName: "",
 		Capacity:  nil,
-		Used:      nil,
-		Mounts:    nil,
+		Used:      map[string]string{},
+		Mounts:    map[string]string{},
 	}
-	capacity := map[string]int{
-		"cpu":    2,
-		"memory": 4,
-		"disk":   50,
-	}
-	hostStatus.Capacity = capacity
+
+	memUsed, _, _ := unstructured.NestedInt64(outStruct, "info", hostStatus.ID, "memory", "used")
+	diskUsed, _, _ := unstructured.NestedString(outStruct, "info", hostStatus.ID, "disks", "sda1", "used")
+	cpuUsed, _, _ := unstructured.NestedSlice(outStruct, "info", hostStatus.ID, "load")
+	logger.Debug("memUsed:", memUsed, "diskUsed:", diskUsed, "cpuUsed:", cpuUsed)
+	hostStatus.Used[v1.MEMKey] = humanize.Bytes(uint64(memUsed))
+	diskUsedInt, _ := strconv.Atoi(diskUsed)
+	hostStatus.Used[v1.DISKKey] = humanize.Bytes(uint64(diskUsedInt))
+	hostStatus.Used[v1.CPUKey] = fmt.Sprintf("%v", cpuUsed)
+	hostStatus.Capacity = role.Resources
 	hostStatus.State, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "state")
 	hostStatus.ImageID, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "image_hash")
 	hostStatus.ImageName, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "release")
 	hostStatus.IPs, _, _ = unstructured.NestedStringSlice(outStruct, "info", hostStatus.ID, "ipv4")
+	hostStatus.Index = index
+	mounts, _, _ := unstructured.NestedMap(outStruct, "info", hostStatus.ID, "mounts")
+	for k := range mounts {
+		hostMount, _, _ := unstructured.NestedString(outStruct, "info", hostStatus.ID, "mounts", k, "source_path")
+		hostStatus.Mounts[hostMount] = k
+	}
+
 	return hostStatus, nil
 }

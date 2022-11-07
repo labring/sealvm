@@ -29,6 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	v12 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"path"
 )
 
@@ -51,6 +52,7 @@ func (r *MultiPassVirtualMachine) Init() {
 		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
+		r.DisableInitHosts,
 		r.FinalStatus,
 	}
 
@@ -197,20 +199,22 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 	}
 	defer r.saveCondition(infra, configCondition)
 
-	//sshClient, sshErr := ssh.NewSSHByVirtualMachine(infra, true)
-	//if sshErr != nil {
-	//	v1.SetConditionError(configCondition, "GetSSH", sshErr)
-	//	return
-	//}
 	var status []v1.VirtualMachineHostStatus
 	for _, host := range infra.Spec.Hosts {
 		for i := 0; i < host.Count; i++ {
-			info, err := r.Inspect(infra.Name, host.Role, i)
-			if err != nil {
-				v1.SetConditionError(configCondition, "GetVM", err)
-				continue
-			}
-			if info.State != "Running" {
+			//retry
+			var info *v1.VirtualMachineHostStatus
+			var err error
+			if e := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				info, err = r.Inspect(infra.Name, host, i)
+				if err != nil {
+					return err
+				}
+				if info.State != "Running" {
+					return fmt.Errorf("instance %s is not running", infra.Name)
+				}
+				return nil
+			}); e != nil {
 				v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
 			}
 			status = append(status, *info)
@@ -248,6 +252,37 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 		v1.SetConditionError(configCondition, "PingVMs", err)
 		return
 	}
+}
+
+func (r *MultiPassVirtualMachine) DisableInitHosts(infra *v1.VirtualMachine) {
+	if !v1.IsConditionsTrue(infra.Status.Conditions) {
+		logger.Info("Skip to exec DisableInitHosts:", r.Desired.Name)
+		return
+	}
+	logger.Info("Start to exec DisableInitHosts:", r.Desired.Name)
+	var configCondition = &v1.Condition{
+		Type:              "DisableInitHosts",
+		Status:            v12.ConditionTrue,
+		Reason:            "disable init hosts on restart",
+		Message:           "multipass instance DisableInitHosts success",
+		LastHeartbeatTime: metav1.Now(),
+	}
+	defer r.saveCondition(infra, configCondition)
+	client := ssh.NewSSHClient(&infra.Spec.SSH, true)
+	eg, _ := errgroup.WithContext(context.Background())
+	execShell := `sed -i "/update_etc_hosts/c \ - ['update_etc_hosts', 'once-per-instance']" /etc/cloud/cloud.cfg && echo > /var/lib/cloud/instance/sem/config_update_etc_hosts `
+	logger.Debug("exec shell for every host:", execShell)
+	for _, host := range infra.Status.Hosts {
+		runHost := host
+		eg.Go(func() error {
+			return client.CmdAsync(runHost.IPs[0], execShell)
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		v1.SetConditionError(configCondition, "DisableInitHosts", err)
+		return
+	}
+
 }
 
 func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error {

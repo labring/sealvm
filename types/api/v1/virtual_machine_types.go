@@ -96,8 +96,9 @@ type VirtualMachineHostStatus struct {
 	ImageID   string            `json:"imageID,omitempty"`
 	ImageName string            `json:"imageName,omitempty"`
 	Capacity  map[string]int    `json:"capacity"`
-	Used      map[string]int    `json:"used"`
+	Used      map[string]string `json:"used"`
 	Mounts    map[string]string `json:"mounts,omitempty"`
+	Index     int               `json:"index,omitempty"`
 }
 
 // +kubebuilder:object:root=true

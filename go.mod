@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dustin/go-humanize v1.0.0
 	github.com/imdario/mergo v0.3.12
 	github.com/labring/endpoints-operator/library v0.0.0-20220819031233-733d330beaea
 	github.com/mitchellh/go-homedir v1.1.0
@@ -14,6 +15,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.3
+	k8s.io/client-go v0.25.0
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
 )

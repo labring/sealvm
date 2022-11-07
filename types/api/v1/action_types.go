@@ -20,15 +20,24 @@ import (
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	Cmd []string `json:"cmd,omitempty"`
-	On  []string `json:"on,omitempty"`
+	On      []string `json:"on,omitempty"`
+	Type    string   `json:"type,omitempty"`
+	SSHCmd  []string `json:"cmd,omitempty"`
+	HostCmd []string `json:"hostCmd,omitempty"`
 }
+
+type ActionPhase string
+
+const (
+	ActionPhaseFailed    ActionPhase = "Failed"
+	ActionPhaseComplete  ActionPhase = "Complete"
+	ActionPhaseInProcess ActionPhase = "InProcess"
+)
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
-	Phase      Phase                      `json:"phase,omitempty"`
-	Hosts      []VirtualMachineHostStatus `json:"hosts"`
-	Conditions []Condition                `json:"conditions,omitempty" `
+	Phase      ActionPhase `json:"phase,omitempty"`
+	Conditions []Condition `json:"conditions,omitempty" `
 }
 
 // +kubebuilder:object:root=true
