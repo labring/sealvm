@@ -51,18 +51,6 @@ type Host struct {
 	Image string `json:"image,omitempty"`
 }
 
-//Name:           sealos-dev
-//State:          Running
-//IPv4:           192.168.64.23
-//Release:        Ubuntu 22.04.1 LTS
-//Image hash:     4d8d5b95082e (Ubuntu 22.04 LTS)
-//Load:           0.00 0.00 0.00
-//Disk usage:     3.9G out of 96.7G
-//Memory usage:   247.5M out of 3.8G
-//Mounts:         /Users/cuisongliu/Workspaces/go/src/github.com => /root/go/src/github.com
-//UID map: 0:default
-//GID map: 0:default
-
 type Phase string
 
 const (

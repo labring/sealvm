@@ -14,6 +14,8 @@
 
 // +kubebuilder:object:generate=true
 // +groupName=virtual-machine.sealos.io
+// +k8s:deepcopy-gen=package
+// +k8s:defaulter-gen=TypeMeta
 
 package v1
 

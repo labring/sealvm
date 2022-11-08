@@ -34,7 +34,7 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sealos-dev",
+	Use:   "sealvm",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -77,5 +77,5 @@ func onBootOnDie() {
 		logger.Error(err)
 		panic(1)
 	}
-	logger.CfgConsoleAndFileLogger(debug, path.Join(clusterRootDir, "logs"), "sealos-dev", false)
+	logger.CfgConsoleAndFileLogger(debug, path.Join(clusterRootDir, "logs"), "sealvm", false)
 }
