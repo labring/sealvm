@@ -22,10 +22,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labring/sealosvm/pkg/utils/iputils"
-	"github.com/labring/sealosvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/iputils"
+	"github.com/labring/sealvm/pkg/utils/logger"
 
-	"github.com/labring/sealosvm/types/api/v1"
+	"github.com/labring/sealvm/types/api/v1"
 )
 
 type Interface interface {

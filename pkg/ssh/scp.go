@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/labring/sealosvm/pkg/utils/file"
-	"github.com/labring/sealosvm/pkg/utils/hash"
-	"github.com/labring/sealosvm/pkg/utils/iputils"
-	"github.com/labring/sealosvm/pkg/utils/logger"
-	"github.com/labring/sealosvm/pkg/utils/progress"
+	"github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/hash"
+	"github.com/labring/sealvm/pkg/utils/iputils"
+	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/progress"
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"

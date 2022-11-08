@@ -18,10 +18,10 @@ package infra
 
 import (
 	"fmt"
-	"github.com/labring/sealosvm/pkg/configs"
-	"github.com/labring/sealosvm/pkg/utils/logger"
-	"github.com/labring/sealosvm/pkg/utils/yaml"
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/yaml"
+	v1 "github.com/labring/sealvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 )

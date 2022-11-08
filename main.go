@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/labring/sealosvm/cmd"
+import "github.com/labring/sealvm/cmd"
 
 func main() {
 	cmd.Execute()

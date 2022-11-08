@@ -19,9 +19,9 @@ package configs
 import (
 	"bytes"
 	"errors"
-	fileutil "github.com/labring/sealosvm/pkg/utils/file"
-	"github.com/labring/sealosvm/pkg/utils/logger"
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	fileutil "github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/logger"
+	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"path"
@@ -41,7 +41,7 @@ func DefaultRootfsDir() string {
 		return DefaultClusterRootfsDir
 	}
 	home, _ := homedir.Dir()
-	return path.Join(home, ".sealosvm")
+	return path.Join(home, ".sealvm")
 }
 
 func GetDataDir(clusterName string) string {

@@ -16,7 +16,7 @@ package v1
 
 import (
 	"fmt"
-	"github.com/labring/sealosvm/pkg/utils/iputils"
+	"github.com/labring/sealvm/pkg/utils/iputils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

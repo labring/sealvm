@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/labring/sealosvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/logger"
 
 	"github.com/pkg/errors"
 )

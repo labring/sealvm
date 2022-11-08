@@ -18,10 +18,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/labring/sealosvm/pkg/apply"
-	fileutil "github.com/labring/sealosvm/pkg/utils/file"
-	"github.com/labring/sealosvm/pkg/utils/maps"
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	"github.com/labring/sealvm/pkg/apply"
+	fileutil "github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/maps"
+	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/spf13/cobra"
 	"os"
 	"path"

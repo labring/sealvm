@@ -23,7 +23,7 @@ import (
 	"os"
 	"strconv"
 
-	http2 "github.com/labring/sealosvm/pkg/utils/http"
+	http2 "github.com/labring/sealvm/pkg/utils/http"
 
 	"github.com/schollz/progressbar/v3"
 )

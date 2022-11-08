@@ -16,8 +16,8 @@ package ssh
 
 import (
 	"fmt"
-	"github.com/labring/sealosvm/pkg/utils/iputils"
-	"github.com/labring/sealosvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/iputils"
+	"github.com/labring/sealvm/pkg/utils/logger"
 	"net"
 	"os"
 	"path"

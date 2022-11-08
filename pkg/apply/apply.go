@@ -19,11 +19,11 @@ package apply
 import (
 	"fmt"
 	"github.com/imdario/mergo"
-	"github.com/labring/sealosvm/pkg/apply/infra"
-	"github.com/labring/sealosvm/pkg/apply/runtime"
-	"github.com/labring/sealosvm/pkg/configs"
-	"github.com/labring/sealosvm/pkg/utils/logger"
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	"github.com/labring/sealvm/pkg/apply/infra"
+	"github.com/labring/sealvm/pkg/apply/runtime"
+	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/utils/logger"
+	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 func NewApplierFromArgs(args *v1.VirtualMachine) (runtime.Interface, error) {

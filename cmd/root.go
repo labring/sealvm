@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/labring/sealosvm/pkg/configs"
-	"github.com/labring/sealosvm/pkg/utils/file"
-	"github.com/labring/sealosvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
@@ -60,7 +60,7 @@ func init() {
 	cobra.OnInitialize(onBootOnDie)
 
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logger")
-	rootCmd.PersistentFlags().StringVar(&clusterRootDir, "cluster-root", path.Join(file.GetHomeDir(), ".sealosvm"), "cluster root directory")
+	rootCmd.PersistentFlags().StringVar(&clusterRootDir, "cluster-root", path.Join(file.GetHomeDir(), ".sealvm"), "cluster root directory")
 }
 
 func onBootOnDie() {

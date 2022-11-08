@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	fileutil "github.com/labring/sealosvm/pkg/utils/file"
+	fileutil "github.com/labring/sealvm/pkg/utils/file"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"

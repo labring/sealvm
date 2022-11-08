@@ -15,7 +15,7 @@
 package configs
 
 import (
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	v1 "github.com/labring/sealvm/types/api/v1"
 	"sync"
 )
 

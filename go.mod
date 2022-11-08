@@ -1,4 +1,4 @@
-module github.com/labring/sealosvm
+module github.com/labring/sealvm
 
 go 1.19
 

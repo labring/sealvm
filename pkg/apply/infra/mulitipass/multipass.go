@@ -17,8 +17,8 @@ limitations under the License.
 package mulitipass
 
 import (
-	"github.com/labring/sealosvm/pkg/configs"
-	v1 "github.com/labring/sealosvm/types/api/v1"
+	"github.com/labring/sealvm/pkg/configs"
+	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 type MultiPassVirtualMachine struct {
