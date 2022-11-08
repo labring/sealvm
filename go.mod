@@ -1,4 +1,4 @@
-module github.com/labring/sealos-vm
+module github.com/labring/sealosvm
 
 go 1.19
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 package install
 
-import v1 "github.com/labring/sealos-vm/types/api/v1"
+import v1 "github.com/labring/sealosvm/types/api/v1"
 
 var AutoDownload = true
 

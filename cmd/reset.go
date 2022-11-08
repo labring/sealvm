@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/labring/sealos-vm/pkg/apply"
-	v1 "github.com/labring/sealos-vm/types/api/v1"
+	"github.com/labring/sealosvm/pkg/apply"
+	v1 "github.com/labring/sealosvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/spf13/cobra"

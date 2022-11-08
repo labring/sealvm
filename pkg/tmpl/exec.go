@@ -19,8 +19,8 @@ package tmpl
 import (
 	"bytes"
 	"encoding/base64"
-	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
-	"github.com/labring/sealos-vm/pkg/utils/logger"
+	fileutil "github.com/labring/sealosvm/pkg/utils/file"
+	"github.com/labring/sealosvm/pkg/utils/logger"
 	"html/template"
 	"os"
 	"runtime"

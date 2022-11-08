@@ -17,11 +17,11 @@ limitations under the License.
 package install
 
 import (
-	"github.com/labring/sealos-vm/pkg/configs"
-	"github.com/labring/sealos-vm/pkg/utils/exec"
-	fileutil "github.com/labring/sealos-vm/pkg/utils/file"
-	"github.com/labring/sealos-vm/pkg/utils/logger"
-	"github.com/labring/sealos-vm/pkg/utils/progress"
+	"github.com/labring/sealosvm/pkg/configs"
+	"github.com/labring/sealosvm/pkg/utils/exec"
+	fileutil "github.com/labring/sealosvm/pkg/utils/file"
+	"github.com/labring/sealosvm/pkg/utils/logger"
+	"github.com/labring/sealosvm/pkg/utils/progress"
 	"path"
 	"runtime"
 )

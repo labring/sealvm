@@ -21,11 +21,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/labring/sealos-vm/pkg/utils/exec"
-	"github.com/labring/sealos-vm/pkg/utils/iputils"
-	"github.com/labring/sealos-vm/pkg/utils/logger"
+	"github.com/labring/sealosvm/pkg/utils/exec"
+	"github.com/labring/sealosvm/pkg/utils/iputils"
+	"github.com/labring/sealosvm/pkg/utils/logger"
 
-	strings2 "github.com/labring/sealos-vm/pkg/utils/strings"
+	strings2 "github.com/labring/sealosvm/pkg/utils/strings"
 )
 
 func (s *SSH) Ping(host string) error {

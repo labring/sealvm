@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/labring/sealos-vm/pkg/install"
-	"github.com/labring/sealos-vm/pkg/utils/logger"
-	v1 "github.com/labring/sealos-vm/types/api/v1"
+	"github.com/labring/sealosvm/pkg/install"
+	"github.com/labring/sealosvm/pkg/utils/logger"
+	v1 "github.com/labring/sealosvm/types/api/v1"
 
 	"github.com/spf13/cobra"
 )
@@ -74,7 +74,7 @@ func checkInstall(vmType string) error {
 		return fmt.Errorf("vm type %s not support", vmType)
 	}
 	if !installer.IsInstall() {
-		return fmt.Errorf("vm tools %s is not installed, please use `sealos-vm install` retry", vmType)
+		return fmt.Errorf("vm tools %s is not installed, please use `sealosvm install` retry", vmType)
 	}
 	return nil
 }
