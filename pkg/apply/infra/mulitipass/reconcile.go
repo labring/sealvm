@@ -86,7 +86,7 @@ func (r *MultiPassVirtualMachine) DeleteVMs(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) DeleteVM(infra *v1.VirtualMachine, host *v1.VirtualMachineHostStatus) error {
-	cmd := fmt.Sprintf("multipass delete -p   %s ", host.ID)
+	cmd := fmt.Sprintf("multipass stop %s && multipass delete -p   %s ", host.ID, host.ID)
 	return exec.Cmd("bash", "-c", cmd)
 }
 

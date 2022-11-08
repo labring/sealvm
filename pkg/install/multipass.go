@@ -30,10 +30,14 @@ type multipass struct{}
 
 func (i *multipass) Install() error {
 	macURL := "https://github.com/canonical/multipass/releases/download/v1.8.1/multipass-1.8.1+mac-Darwin.pkg"
+	newMacURL := "https://github.com/canonical/multipass/releases/download/v1.8.1/multipass-1.8.1+mac-Darwin.pkg"
 	winURL := "https://github.com/canonical/multipass/releases/download/v1.8.0/multipass-1.8.0+win-win64.exe"
 	dirName := path.Join(configs.DefaultRootfsDir(), "multipass")
 	_ = fileutil.MkDirs(dirName)
 	if runtime.GOOS == "darwin" {
+		if "arm64" == runtime.GOARCH {
+			macURL = newMacURL
+		}
 		if !AutoDownload {
 			logger.Info("please download multipass from %s", macURL)
 			return nil
