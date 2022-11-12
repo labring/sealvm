@@ -43,6 +43,8 @@ runcmd:
   - echo "{{ .PublicKeyBase64 }}" | base64 -d >> /root/.ssh/authorized_keys
   - echo "{{ .PrivateKeyBase64 }}"| base64 -d > /root/.ssh/id_rsa
   - chmod 600 /root/.ssh/id_rsa
+  - sed -i "/update_etc_hosts/c \ - ['update_etc_hosts', 'once-per-instance']" /etc/cloud/cloud.cfg
+  - touch /var/lib/cloud/instance/sem/config_update_etc_hosts
 `
 
 const GolangTpl Tpl = `write_files:
@@ -79,4 +81,6 @@ runcmd:
   - echo "{{ .PublicKeyBase64 }}" | base64 -d  >> /root/.ssh/authorized_keys
   - echo "{{ .PrivateKeyBase64 }}" | base64 -d > /root/.ssh/id_rsa
   - chmod 600 /root/.ssh/id_rsa
+  - sed -i "/update_etc_hosts/c \ - ['update_etc_hosts', 'once-per-instance']" /etc/cloud/cloud.cfg
+  - touch /var/lib/cloud/instance/sem/config_update_etc_hosts
 `

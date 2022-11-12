@@ -48,11 +48,9 @@ func (r *MultiPassVirtualMachine) Init() {
 		r.InitStatus,
 		r.ApplyConfig,
 		r.ApplyVMs,
-		//r.TransferSSHKey,
 		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
-		r.DisableInitHosts,
 		r.FinalStatus,
 	}
 
@@ -252,37 +250,6 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 		v1.SetConditionError(configCondition, "PingVMs", err)
 		return
 	}
-}
-
-func (r *MultiPassVirtualMachine) DisableInitHosts(infra *v1.VirtualMachine) {
-	if !v1.IsConditionsTrue(infra.Status.Conditions) {
-		logger.Info("Skip to exec DisableInitHosts:", r.Desired.Name)
-		return
-	}
-	logger.Info("Start to exec DisableInitHosts:", r.Desired.Name)
-	var configCondition = &v1.Condition{
-		Type:              "DisableInitHosts",
-		Status:            v12.ConditionTrue,
-		Reason:            "disable init hosts on restart",
-		Message:           "multipass instance DisableInitHosts success",
-		LastHeartbeatTime: metav1.Now(),
-	}
-	defer r.saveCondition(infra, configCondition)
-	client := ssh.NewSSHClient(&infra.Spec.SSH, true)
-	eg, _ := errgroup.WithContext(context.Background())
-	execShell := `sed -i "/update_etc_hosts/c \ - ['update_etc_hosts', 'once-per-instance']" /etc/cloud/cloud.cfg && echo > /var/lib/cloud/instance/sem/config_update_etc_hosts `
-	logger.Debug("exec shell for every host:", execShell)
-	for _, host := range infra.Status.Hosts {
-		runHost := host
-		eg.Go(func() error {
-			return client.CmdAsync(runHost.IPs[0], execShell)
-		})
-	}
-	if err := eg.Wait(); err != nil {
-		v1.SetConditionError(configCondition, "DisableInitHosts", err)
-		return
-	}
-
 }
 
 func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error {

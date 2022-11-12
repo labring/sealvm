@@ -41,7 +41,6 @@ func (r *MultiPassVirtualMachine) Reconcile() {
 		r.ApplyConfig,
 		r.SyncVMs,
 		r.PingVms,
-		r.DisableInitHosts,
 		r.FinalStatus,
 	}
 	if !r.Desired.DeletionTimestamp.IsZero() {

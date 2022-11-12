@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sealos-job
+  labels:
+    app: sealos-job
+spec:
+  backoffLimit: 1
+  completionMode: NonIndexed
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - emptyDir: { }
+          name: sealos
+        - emptyDir: { }
+          name: containers
+      containers:
+        - name: sealos
+          image: ghcr.io/labring/sealos:v4.1.4-rc1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          command:
+            - "bash"
+            - "-c"
+            - |
+              apt-get -qq update 
+              apt-get -qq install -y --no-install-recommends ca-certificates curl
+              sealos version
+          volumeMounts:
+            - name: sealos
+              mountPath: /var/lib/sealos
+            - name: containers
+              mountPath: /var/lib/containers
+
