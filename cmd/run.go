@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"path"
+	"strings"
 )
 
 // runCmd represents the run command
@@ -45,6 +46,10 @@ func newRunCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if strings.Contains(vm.Name, "-") {
+				return fmt.Errorf("your cluster name contains chart '-' ")
+			}
+
 			if err := checkInstall(vm.Spec.Type); err != nil {
 				return err
 			}

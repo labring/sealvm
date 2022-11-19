@@ -6,28 +6,19 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-install-deepcopy-gen:
-ifeq (, $(shell which deepcopy-gen))
-	@{ \
-	set -e ;\
-	LICENSE_TMP_DIR=$$(mktemp -d) ;\
-	cd $$LICENSE_TMP_DIR ;\
-	go mod init tmp ;\
-	go get -v k8s.io/code-generator/cmd/deepcopy-gen ;\
-	rm -rf $$LICENSE_TMP_DIR ;\
-	}
-DEEPCOPY_BIN=$(GOBIN)/deepcopy-gen
-else
-DEEPCOPY_BIN=$(shell which deepcopy-gen)
-endif
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
 
+CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+CONTROLLER_TOOLS_VERSION ?= v0.9.2
 
+.PHONY: controller-gen
+controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
+$(CONTROLLER_GEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
-HEAD_FILE := hack/boilerplate.go.txt
-INPUT_DIR := github.com/labring/sealvm/types/api
-deepcopy:install-deepcopy-gen
-	$(DEEPCOPY_BIN) \
-      --input-dirs="$(INPUT_DIR)/v1" \
-      -O zz_generated.deepcopy   \
-      --go-header-file "$(HEAD_FILE)" \
-      --output-base "${GOPATH}/src"
+.PHONY: generate
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."

@@ -17,8 +17,6 @@ limitations under the License.
 package apply
 
 import (
-	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/labring/sealvm/pkg/apply/infra"
 	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/configs"
@@ -39,11 +37,10 @@ func NewApplierFromArgs(args *v1.VirtualMachine) (runtime.Interface, error) {
 		i = initVirtualMachine(name)
 	}
 
-	if err := mergo.Merge(i, args); err != nil {
-		return nil, fmt.Errorf("merge: %v", err)
-	}
-
-	return infra.NewDefaultVirtualMachine(i, cf)
+	target := i.DeepCopy()
+	target.Spec = *args.Spec.DeepCopy()
+	target.ObjectMeta = *args.ObjectMeta.DeepCopy()
+	return infra.NewDefaultVirtualMachine(target, cf)
 }
 
 func initVirtualMachine(clusterName string) *v1.VirtualMachine {

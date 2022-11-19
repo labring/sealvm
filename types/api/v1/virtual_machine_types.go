@@ -77,9 +77,11 @@ type Condition struct {
 }
 
 type VirtualMachineHostStatus struct {
-	State     string            `json:"state"`
-	Role      string            `json:"roles"`
-	ID        string            `json:"ID,omitempty"`
+	State string `json:"state"`
+	Role  string `json:"roles"`
+	ID    string `json:"ID,omitempty"`
+
+	//当前主机的所有IP，可能包括公开或者私有的IP
 	IPs       []string          `json:"IPs,omitempty"`
 	ImageID   string            `json:"imageID,omitempty"`
 	ImageName string            `json:"imageName,omitempty"`
@@ -141,6 +143,24 @@ func (c *VirtualMachine) GetIPSByRole(role string) []string {
 		}
 	}
 	return hosts
+}
+
+func (c *VirtualMachine) GetHostByRole(role string) *Host {
+	for _, host := range c.Spec.Hosts {
+		if role == host.Role {
+			return &host
+		}
+	}
+	return nil
+}
+
+func (c *VirtualMachine) GetHostStatusByRoleIndex(role string, index int) *VirtualMachineHostStatus {
+	for _, host := range c.Status.Hosts {
+		if role == host.Role && index == host.Index {
+			return &host
+		}
+	}
+	return nil
 }
 
 func (c *VirtualMachine) GetSSH() SSH {

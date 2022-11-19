@@ -16,6 +16,10 @@ limitations under the License.
 
 package runtime
 
+import v1 "github.com/labring/sealvm/types/api/v1"
+
 type Interface interface {
 	Apply() error
 }
+
+type Diff func(old, new *v1.VirtualMachine) (add, delete []string)

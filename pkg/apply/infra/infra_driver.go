@@ -18,17 +18,20 @@ package infra
 
 import (
 	"fmt"
+	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/strings"
 	"github.com/labring/sealvm/pkg/utils/yaml"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"os"
 )
 
 type Interface interface {
 	Init()
-	Reconcile()
+	Reconcile(diff runtime.Diff)
 	DesiredVM() *v1.VirtualMachine
 	CurrentVM() *v1.VirtualMachine
 }
@@ -42,14 +45,28 @@ func (c *driver) Apply() error {
 		c.Infra.Init()
 		c.Infra.DesiredVM().CreationTimestamp = metav1.Now()
 	} else {
-		c.Infra.Reconcile()
+		c.Infra.Reconcile(DiffVirtualMachine)
 	}
 	return c.updateCRStatus()
 
 }
 
-func DiffVirtualMachine(old, new *v1.VirtualMachine) {
-
+func DiffVirtualMachine(old, new *v1.VirtualMachine) (add, delete []string) {
+	oldSpec := sets.NewString()
+	for _, h := range old.Spec.Hosts {
+		for i := 0; i < h.Count; i++ {
+			oldSpec.Insert(strings.GetID(old.Name, h.Role, i))
+		}
+	}
+	newSpec := sets.NewString()
+	for _, h := range new.Spec.Hosts {
+		for i := 0; i < h.Count; i++ {
+			newSpec.Insert(strings.GetID(new.Name, h.Role, i))
+		}
+	}
+	addSets := newSpec.Difference(oldSpec)
+	deleteSets := oldSpec.Difference(newSpec)
+	return addSets.List(), deleteSets.List()
 }
 
 func (c *driver) getWriteBackObjects() []interface{} {
