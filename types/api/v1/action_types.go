@@ -20,10 +20,14 @@ import (
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	On      []string `json:"on,omitempty"`
-	Type    string   `json:"type,omitempty"`
-	SSHCmd  []string `json:"cmd,omitempty"`
-	HostCmd []string `json:"hostCmd,omitempty"`
+	//master master-0
+	//node node-0
+	//registry registry-0
+	//dev dev-0
+	//host
+	On   []string `json:"on,omitempty"`
+	Type string   `json:"type,omitempty"`
+	Cmd  []string `json:"cmd,omitempty"`
 }
 
 type ActionPhase string

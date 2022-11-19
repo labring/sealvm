@@ -25,6 +25,7 @@ import (
 	"github.com/labring/sealvm/pkg/utils/exec"
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"golang.org/x/sync/errgroup"
 	v12 "k8s.io/api/core/v1"
@@ -47,7 +48,7 @@ func (r *MultiPassVirtualMachine) Init() {
 	pipelines := []func(infra *v1.VirtualMachine){
 		r.InitStatus,
 		r.ApplyConfig,
-		r.ApplyVMs,
+		r.CreateVMs,
 		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
@@ -109,22 +110,16 @@ func (r *MultiPassVirtualMachine) ApplyConfig(infra *v1.VirtualMachine) {
 	}
 }
 
-func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
-	logger.Info("Start to exec ApplyVMs:", r.Desired.Name)
+func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
+	logger.Info("Start to exec CreateVMs:", r.Desired.Name)
 	var configCondition = &v1.Condition{
-		Type:              "VMs",
+		Type:              "InitVMs",
 		Status:            v12.ConditionTrue,
 		Reason:            "VM start",
 		Message:           "launch multipass success",
 		LastHeartbeatTime: metav1.Now(),
 	}
 	defer r.saveCondition(infra, configCondition)
-
-	//sshClient, sshErr := ssh.NewSSHByVirtualMachine(infra, true)
-	//if sshErr != nil {
-	//	v1.SetConditionError(configCondition, "GetSSH", sshErr)
-	//	return
-	//}
 
 	eg, _ := errgroup.WithContext(context.Background())
 
@@ -166,10 +161,9 @@ func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
 			dHost := host
 			index := i
 			eg.Go(func() error {
-				id := fmt.Sprintf("%s-%s-%d", infra.Name, dHost.Role, index)
 				if host.Mounts != nil {
 					for h, m := range host.Mounts {
-						_ = exec.Cmd("bash", "-c", fmt.Sprintf("multipass mount %s %s:%s", h, id, m))
+						_ = exec.Cmd("bash", "-c", fmt.Sprintf("multipass mount %s %s:%s", h, strings.GetID(infra.Name, dHost.Role, index), m))
 					}
 				}
 				return nil
@@ -261,7 +255,7 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 	if logger.IsDebugMode() {
 		debugFlag = "-vvv"
 	}
-	cmd := fmt.Sprintf("multipass launch --name %s-%s-%d --cpus %d --mem %dG --disk %dG --cloud-init %s %s", infra.Name, host.Role, index, host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag)
+	cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag)
 	return exec.Cmd("bash", "-c", cmd)
 }
 

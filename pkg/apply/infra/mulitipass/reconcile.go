@@ -21,8 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dustin/go-humanize"
+	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/utils/exec"
 	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	errors2 "github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -33,12 +35,14 @@ import (
 	"strconv"
 )
 
-func (r *MultiPassVirtualMachine) Reconcile() {
+func (r *MultiPassVirtualMachine) Reconcile(diff runtime.Diff) {
 	logger.Info("Start to reconcile a new infra:", r.Desired.Name)
-
+	r.DiffFunc = diff
 	pipelines := []func(infra *v1.VirtualMachine){
 		r.InitStatus,
 		r.ApplyConfig,
+		r.ApplyVMs,
+		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
 		r.FinalStatus,
@@ -56,6 +60,55 @@ func (r *MultiPassVirtualMachine) Reconcile() {
 		r.Desired.Status.Phase = v1.PhaseSuccess
 	}
 	logger.Info("succeeded in reconcile, enjoy it!")
+}
+func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
+	logger.Info("Start to exec ApplyVMs:", r.Desired.Name)
+	var configCondition = &v1.Condition{
+		Type:              "ApplyVMs",
+		Status:            v12.ConditionTrue,
+		Reason:            "VM apply",
+		Message:           "apply multipass success",
+		LastHeartbeatTime: metav1.Now(),
+	}
+	defer r.saveCondition(infra, configCondition)
+	addHostNames, deleteHostNames := r.DiffFunc(r.Current, r.Desired)
+
+	eg, _ := errgroup.WithContext(context.Background())
+
+	for _, host := range addHostNames {
+		eg.Go(func() error {
+			_, role, index := strings.GetHostV1FromAliasName(host)
+			hostObj := infra.GetHostByRole(role)
+			if hostObj != nil {
+				indexInt, err := strconv.Atoi(index)
+				if err == nil {
+					return r.CreateVM(infra, hostObj, indexInt)
+				}
+				return err
+			}
+			return fmt.Errorf("not found host from role: %s", role)
+		})
+	}
+
+	for _, host := range deleteHostNames {
+		eg.Go(func() error {
+			_, role, index := strings.GetHostV1FromAliasName(host)
+			indexInt, err := strconv.Atoi(index)
+			if err == nil {
+				hostStatus := r.Current.GetHostStatusByRoleIndex(role, indexInt)
+				if hostStatus != nil {
+					return r.DeleteVM(r.Current, hostStatus)
+				}
+				return fmt.Errorf("not found host status from role: %s, index: %d", role, indexInt)
+			}
+			return err
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		v1.SetConditionError(configCondition, "ApplyVMsError", err)
+		return
+	}
 }
 
 func (r *MultiPassVirtualMachine) DeleteVMs(infra *v1.VirtualMachine) {
@@ -90,7 +143,7 @@ func (r *MultiPassVirtualMachine) DeleteVM(infra *v1.VirtualMachine, host *v1.Vi
 }
 
 func (r *MultiPassVirtualMachine) Get(name, role string, index int) (string, error) {
-	cmd := fmt.Sprintf("multipass info %s-%s-%d --format=json", name, role, index)
+	cmd := fmt.Sprintf("multipass info %s --format=json", strings.GetID(name, role, index))
 	out, _ := exec.RunBashCmd(cmd)
 	if out == "" {
 		return "", errors.New("not found instance")
@@ -120,7 +173,7 @@ func (r *MultiPassVirtualMachine) Inspect(name string, role v1.Host, index int) 
 	hostStatus := &v1.VirtualMachineHostStatus{
 		State:     "",
 		Role:      role.Role,
-		ID:        fmt.Sprintf("%s-%s-%d", name, role.Role, index),
+		ID:        strings.GetID(name, role.Role, index),
 		IPs:       nil,
 		ImageID:   "",
 		ImageName: "",

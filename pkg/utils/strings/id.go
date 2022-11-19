@@ -14,17 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package strings
 
 import (
-	"github.com/labring/sealvm/pkg/apply/runtime"
-	"github.com/labring/sealvm/pkg/configs"
-	v1 "github.com/labring/sealvm/types/api/v1"
+	"fmt"
+	"strings"
 )
 
-type MultiPassVirtualMachine struct {
-	Desired  *v1.VirtualMachine
-	Current  *v1.VirtualMachine
-	Config   configs.Interface
-	DiffFunc runtime.Diff
+func GetID(name, role string, index int) string {
+	return fmt.Sprintf("%s-%s-%d", name, role, index)
+}
+
+func GetHostV1FromAliasName(aliasName string) (name, role, index string) {
+	all := strings.Split(aliasName, "-")
+	if len(all) == 3 {
+		return all[0], all[1], all[2]
+	}
+	return
 }
