@@ -16,12 +16,13 @@ package ssh
 
 import (
 	"fmt"
-	"github.com/schollz/progressbar/v3"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 
 	"github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/hash"

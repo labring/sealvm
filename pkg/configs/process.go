@@ -19,12 +19,13 @@ package configs
 import (
 	"bytes"
 	"errors"
+	"path"
+
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"path"
 )
 
 var ErrVirtualMachineFileNotExists = errors.New("the vm file is not exist")

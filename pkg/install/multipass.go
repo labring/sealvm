@@ -17,13 +17,14 @@ limitations under the License.
 package install
 
 import (
+	"path"
+	"runtime"
+
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/exec"
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/progress"
-	"path"
-	"runtime"
 )
 
 type multipass struct{}

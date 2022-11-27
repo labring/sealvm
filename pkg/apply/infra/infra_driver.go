@@ -18,6 +18,8 @@ package infra
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/logger"
@@ -26,7 +28,6 @@ import (
 	v1 "github.com/labring/sealvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"os"
 )
 
 type Interface interface {

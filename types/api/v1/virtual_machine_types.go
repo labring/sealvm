@@ -16,6 +16,7 @@ package v1
 
 import (
 	"fmt"
+
 	"github.com/labring/sealvm/pkg/utils/iputils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -121,10 +122,8 @@ func init() {
 // Language: go
 
 var (
-	MASTER   = "master"
-	NODE     = "node"
-	REGISTRY = "registry"
-	DEV      = "dev"
+	NODE   = "node"
+	GOLANG = "golang"
 
 	CPUKey  = "cpu"
 	MEMKey  = "memory"
@@ -167,16 +166,8 @@ func (c *VirtualMachine) GetSSH() SSH {
 	return c.Spec.SSH
 }
 
-func (c *VirtualMachine) GetMasterIPList() []string {
-	return iputils.GetHostIPs(c.GetIPSByRole(MASTER))
-}
-
 func (c *VirtualMachine) GetNodeIPList() []string {
 	return iputils.GetHostIPs(c.GetIPSByRole(NODE))
-}
-
-func (c *VirtualMachine) GetRegistryIPList() []string {
-	return iputils.GetHostIPs(c.GetIPSByRole(REGISTRY))
 }
 
 func (c *VirtualMachine) GetMaster0IP() string {

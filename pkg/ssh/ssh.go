@@ -25,7 +25,7 @@ import (
 	"github.com/labring/sealvm/pkg/utils/iputils"
 	"github.com/labring/sealvm/pkg/utils/logger"
 
-	"github.com/labring/sealvm/types/api/v1"
+	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 type Interface interface {

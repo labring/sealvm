@@ -19,8 +19,9 @@ package ssh
 import (
 	"context"
 	"fmt"
-	v1 "github.com/labring/sealvm/types/api/v1"
 	"strings"
+
+	v1 "github.com/labring/sealvm/types/api/v1"
 
 	"github.com/labring/sealvm/pkg/utils/logger"
 
@@ -35,7 +36,7 @@ type Exec struct {
 func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (Exec, error) {
 	var ipList []string
 	if roles == "" {
-		ipList = append(vm.GetMasterIPList(), vm.GetNodeIPList()...)
+		ipList = append(vm.GetNodeIPList())
 	} else {
 		roleList := strings.Split(roles, ",")
 		for _, role := range roleList {

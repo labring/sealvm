@@ -15,8 +15,9 @@
 package configs
 
 import (
-	v1 "github.com/labring/sealvm/types/api/v1"
 	"sync"
+
+	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 type VirtualMachineFile struct {

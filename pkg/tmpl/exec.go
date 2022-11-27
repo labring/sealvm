@@ -19,11 +19,12 @@ package tmpl
 import (
 	"bytes"
 	"encoding/base64"
-	fileutil "github.com/labring/sealvm/pkg/utils/file"
-	"github.com/labring/sealvm/pkg/utils/logger"
 	"html/template"
 	"os"
 	"runtime"
+
+	fileutil "github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/logger"
 )
 
 func (tpl Tpl) Execute(data map[string]interface{}) (string, error) {
