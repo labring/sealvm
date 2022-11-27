@@ -18,20 +18,21 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/labring/sealvm/pkg/apply"
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/maps"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"strings"
 )
 
 // runCmd represents the run command
 func newRunCmd() *cobra.Command {
 	vm := v1.VirtualMachine{}
-	var masters, nodes, registry int
+	var nodes int
 	var dev bool
 	var src string
 	var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
@@ -60,36 +61,9 @@ func newRunCmd() *cobra.Command {
 				mounts := maps.StringToMap(src, ",")
 
 				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.DEV,
+					Role:   v1.GOLANG,
 					Count:  1,
 					Mounts: mounts,
-					Resources: map[string]int{
-						v1.CPUKey:  2,
-						v1.MEMKey:  4,
-						v1.DISKKey: 50,
-					},
-				})
-			}
-			if registry != 0 {
-				if registry != 1 {
-					return fmt.Errorf("registry must be 1")
-				}
-				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.REGISTRY,
-					Count:  1,
-					Mounts: map[string]string{},
-					Resources: map[string]int{
-						v1.CPUKey:  2,
-						v1.MEMKey:  4,
-						v1.DISKKey: 50,
-					},
-				})
-			}
-			if masters != 0 {
-				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.MASTER,
-					Count:  masters,
-					Mounts: map[string]string{},
 					Resources: map[string]int{
 						v1.CPUKey:  2,
 						v1.MEMKey:  4,
@@ -117,9 +91,7 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().StringVarP(&vm.Spec.SSH.PublicFile, "pub", "p", path.Join(fileutil.GetHomeDir(), ".ssh", "id_rsa.pub"), "selects a file from which the identity (public key) for public key authentication is read")
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
-	runCmd.Flags().IntVarP(&masters, "masters", "m", 1, "number of masters")
 	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
-	runCmd.Flags().IntVarP(&registry, "registry", "r", 0, "number of registry")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
 	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
 	return runCmd

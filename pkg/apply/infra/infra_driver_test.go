@@ -17,10 +17,11 @@ limitations under the License.
 package infra
 
 import (
-	v1 "github.com/labring/sealvm/types/api/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
+
+	v1 "github.com/labring/sealvm/types/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestDiffVirtualMachine(t *testing.T) {

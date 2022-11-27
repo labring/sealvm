@@ -18,13 +18,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"runtime"
+
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"runtime"
 )
 
 var (

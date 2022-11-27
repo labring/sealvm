@@ -19,6 +19,8 @@ package mulitipass
 import (
 	"context"
 	"fmt"
+	"path"
+
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/ssh"
 	"github.com/labring/sealvm/pkg/tmpl"
@@ -31,7 +33,6 @@ import (
 	v12 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
-	"path"
 )
 
 func (r *MultiPassVirtualMachine) DesiredVM() *v1.VirtualMachine {
@@ -65,13 +66,9 @@ func (r *MultiPassVirtualMachine) Init() {
 
 }
 
-func GetNodesYaml(clusterName string) string {
+func GetCloudInitYamlByRole(clusterName, role string) string {
 
-	return path.Join(configs.GetEtcDir(clusterName), "nodes.yaml")
-}
-
-func GetGolangYaml(clusterName string) string {
-	return path.Join(configs.GetEtcDir(clusterName), "golang.yaml")
+	return path.Join(configs.GetEtcDir(clusterName), fmt.Sprintf("%s.yaml", role))
 }
 
 func (r *MultiPassVirtualMachine) InitStatus(infra *v1.VirtualMachine) {
@@ -100,12 +97,12 @@ func (r *MultiPassVirtualMachine) ApplyConfig(infra *v1.VirtualMachine) {
 	if !fileutil.IsExist(configs.GetDataDir(infra.Name)) {
 		_ = fileutil.MkDirs(configs.GetDataDir(infra.Name))
 	}
-	if err := tmpl.ExecuteNodesToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetNodesYaml(infra.Name)); err != nil {
+	if err := tmpl.ExecuteNodesToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetCloudInitYamlByRole(infra.Name, v1.NODE)); err != nil {
 		v1.SetConditionError(configCondition, "ConfigNodeGenerateError", err)
 		return
 	}
 
-	if err := tmpl.ExecuteGolangToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetGolangYaml(infra.Name)); err != nil {
+	if err := tmpl.ExecuteGolangToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetCloudInitYamlByRole(infra.Name, v1.GOLANG)); err != nil {
 		v1.SetConditionError(configCondition, "ConfigGolangGenerateError", err)
 	}
 }
@@ -247,10 +244,7 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error {
-	cfg := GetNodesYaml(infra.Name)
-	if v1.DEV == host.Role {
-		cfg = GetGolangYaml(infra.Name)
-	}
+	cfg := GetCloudInitYamlByRole(infra.Name, host.Role)
 	debugFlag := ""
 	if logger.IsDebugMode() {
 		debugFlag = "-vvv"

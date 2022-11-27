@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/dustin/go-humanize"
 	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/utils/exec"
@@ -32,7 +34,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
-	"strconv"
 )
 
 func (r *MultiPassVirtualMachine) Reconcile(diff runtime.Diff) {

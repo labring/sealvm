@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/labring/sealvm/pkg/install"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"

@@ -14,20 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package action
 
 import (
-	"testing"
-
-	"github.com/dustin/go-humanize"
+	"github.com/labring/sealvm/pkg/configs"
+	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
-func TestMultiPassVirtualMachine_Get(t *testing.T) {
-	//r := &MultiPassVirtualMachine{}
-	//_, err := r.Get("aa", "cc", 1)
-	//if err != nil {
-	//	t.Errorf(err.Error())
-	//	return
-	//}
-	t.Log(humanize.Bytes(uint64(1520263168)))
+type driver struct {
+	Desired *v1.Action
+	Current *v1.Action
+	Config  configs.Interface
+}
+
+func (c *driver) Apply() error {
+	return nil
 }

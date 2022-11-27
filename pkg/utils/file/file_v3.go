@@ -17,11 +17,12 @@ package file
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"io"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/mitchellh/go-homedir"
 )
 
 func statDir(dirPath, recPath string, includeDir, isDirOnly, followSymlinks bool) ([]string, error) {
