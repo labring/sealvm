@@ -7,7 +7,12 @@ sealvm install
 
 - init vms 
 ```shell
-sealvm run --masters=1 --nodes=1 --registry=0 --dev --dev-mounts=/Users/xxx:/Users/xxx
+sealvm run --nodes=1 
+```
+
+- init vms add dev 
+```shell
+sealvm run --nodes=1   --dev --dev-mounts=/Users/xxx:/Users/xxx
 ```
 
 - reset vms
