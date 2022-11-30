@@ -39,7 +39,6 @@ const NodesTpl Tpl = `write_files:
   path: /usr/bin/proxy_off
   permissions: '0755'
 runcmd:
-  - echo "deb [trusted=yes] https://apt.fury.io/labring/ /" | tee /etc/apt/sources.list.d/labring.list
   - echo "{{ .PublicKeyBase64 }}" | base64 -d >> /root/.ssh/authorized_keys
   - echo "{{ .PrivateKeyBase64 }}"| base64 -d > /root/.ssh/id_rsa
   - chmod 600 /root/.ssh/id_rsa
