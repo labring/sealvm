@@ -200,7 +200,8 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 				}
 				return nil
 			}); e != nil {
-				v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
+				v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm %s status is not running", strings.GetID(infra.Name, host.Role, i)))
+				continue
 			}
 			status = append(status, *info)
 		}
