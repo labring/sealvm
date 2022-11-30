@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	strings2 "strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/labring/sealvm/pkg/apply/runtime"
@@ -160,7 +161,7 @@ func (r *MultiPassVirtualMachine) Get(name, role string, index int) (string, err
 func (r *MultiPassVirtualMachine) GetById(name string) (string, error) {
 	cmd := fmt.Sprintf("multipass info %s --format=json", name)
 	out, _ := exec.RunBashCmd(cmd)
-	if out == "" {
+	if out == "" || strings2.Contains(out, "does not exist") {
 		return "", errors.New("not found instance")
 	}
 	return out, nil
