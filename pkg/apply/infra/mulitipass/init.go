@@ -174,10 +174,6 @@ func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
-	if !v1.IsConditionsTrue(infra.Status.Conditions) {
-		logger.Info("Skip to exec SyncVMs:", r.Desired.Name)
-		return
-	}
 	logger.Info("Start to exec SyncVMs:", r.Desired.Name)
 	var configCondition = &v1.Condition{
 		Type:              "SyncVMs",
@@ -208,8 +204,8 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 			}
 			status = append(status, *info)
 		}
-
 	}
+
 	infra.Status.Hosts = status
 }
 
@@ -249,9 +245,12 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 	if logger.IsDebugMode() {
 		debugFlag = "-vvv"
 	}
-	cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
-	logger.Info("executing... %s \n", cmd)
-	return exec.Cmd("bash", "-c", cmd)
+	if _, err := r.GetById(strings.GetID(infra.Name, host.Role, index)); err != nil {
+		cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
+		logger.Info("executing... %s \n", cmd)
+		return exec.Cmd("bash", "-c", cmd)
+	}
+	return nil
 }
 
 func (r *MultiPassVirtualMachine) FinalStatus(infra *v1.VirtualMachine) {

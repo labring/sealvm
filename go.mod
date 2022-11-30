@@ -1,11 +1,10 @@
 module github.com/labring/sealvm
 
-go 1.19
+go 1.18
 
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dustin/go-humanize v1.0.0
-	github.com/imdario/mergo v0.3.12
 	github.com/labring/endpoints-operator/library v0.0.0-20220819031233-733d330beaea
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/sftp v1.13.5

@@ -77,8 +77,9 @@ func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
 	eg, _ := errgroup.WithContext(context.Background())
 
 	for _, host := range addHostNames {
+		h := host
 		eg.Go(func() error {
-			_, role, index := strings.GetHostV1FromAliasName(host)
+			_, role, index := strings.GetHostV1FromAliasName(h)
 			hostObj := infra.GetHostByRole(role)
 			if hostObj != nil {
 				indexInt, err := strconv.Atoi(index)
@@ -92,8 +93,9 @@ func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
 	}
 
 	for _, host := range deleteHostNames {
+		h := host
 		eg.Go(func() error {
-			_, role, index := strings.GetHostV1FromAliasName(host)
+			_, role, index := strings.GetHostV1FromAliasName(h)
 			indexInt, err := strconv.Atoi(index)
 			if err == nil {
 				hostStatus := r.Current.GetHostStatusByRoleIndex(role, indexInt)
@@ -139,8 +141,11 @@ func (r *MultiPassVirtualMachine) DeleteVMs(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) DeleteVM(infra *v1.VirtualMachine, host *v1.VirtualMachineHostStatus) error {
-	cmd := fmt.Sprintf("multipass stop %s && multipass delete -p   %s ", host.ID, host.ID)
-	return exec.Cmd("bash", "-c", cmd)
+	if _, err := r.GetById(host.ID); err == nil {
+		cmd := fmt.Sprintf("multipass stop %s && multipass delete -p   %s ", host.ID, host.ID)
+		return exec.Cmd("bash", "-c", cmd)
+	}
+	return nil
 }
 
 func (r *MultiPassVirtualMachine) Get(name, role string, index int) (string, error) {

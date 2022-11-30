@@ -20,10 +20,7 @@ import (
 
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	//master master-0
 	//node node-0
-	//registry registry-0
-	//dev dev-0
 	//host
 	On   []string `json:"on,omitempty"`
 	Type string   `json:"type,omitempty"`

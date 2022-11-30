@@ -101,7 +101,7 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
 	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
-	runCmd.Flags().StringVarP(&defaultImage, "default-image", "i", "18.04", "default image.")
+	runCmd.Flags().StringVarP(&defaultImage, "default-image", "e", "18.04", "default image.")
 	runCmd.Flags().IntVarP(&defaultCpuNum, "default-node-cpu", "c", 4, "default vcpu num per node. ")
 	runCmd.Flags().IntVarP(&defaultMemoryGb, "default-node-mem", "m", 8, "default mem size per node. （GB） ")
 	runCmd.Flags().IntVarP(&defaultDiskGb, "default-node-disk", "k", 100, "default disk size per node. （GB）")

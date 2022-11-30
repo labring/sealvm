@@ -55,6 +55,9 @@ func IsConditionsTrue(conditions []Condition) bool {
 		return false
 	}
 	for _, condition := range conditions {
+		if condition.Type == "Ready" {
+			continue
+		}
 		if condition.Status != v1.ConditionTrue {
 			return false
 		}
