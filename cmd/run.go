@@ -70,8 +70,8 @@ func newRunCmd() *cobra.Command {
 					Mounts: mounts,
 					Resources: map[string]int{
 						v1.CPUKey:  defaultCpuNum,
-						v1.MEMKey:  defaultDiskGb,
-						v1.DISKKey: defaultMemoryGb,
+						v1.DISKKey: defaultDiskGb,
+						v1.MEMKey:  defaultMemoryGb,
 					},
 					Image: defaultImage,
 				})
@@ -83,8 +83,8 @@ func newRunCmd() *cobra.Command {
 					Mounts: map[string]string{},
 					Resources: map[string]int{
 						v1.CPUKey:  defaultCpuNum,
-						v1.MEMKey:  defaultDiskGb,
-						v1.DISKKey: defaultMemoryGb,
+						v1.DISKKey: defaultDiskGb,
+						v1.MEMKey:  defaultMemoryGb,
 					},
 					Image: defaultImage,
 				})
