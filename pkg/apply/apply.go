@@ -39,7 +39,7 @@ func NewApplierFromArgs(args *v1.VirtualMachine) (runtime.Interface, error) {
 
 	target := i.DeepCopy()
 	target.Spec = *args.Spec.DeepCopy()
-	target.ObjectMeta = *args.ObjectMeta.DeepCopy()
+	target.DeletionTimestamp = args.DeletionTimestamp
 	return infra.NewDefaultVirtualMachine(target, cf)
 }
 
