@@ -36,6 +36,10 @@ func newRunCmd() *cobra.Command {
 	var dev bool
 	var src string
 	var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
+	var defaultImage string
+	var defaultCpuNum int
+	var defaultDiskGb int
+	var defaultMemoryGb int
 	var runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "A brief description of your command",
@@ -65,10 +69,11 @@ func newRunCmd() *cobra.Command {
 					Count:  1,
 					Mounts: mounts,
 					Resources: map[string]int{
-						v1.CPUKey:  2,
-						v1.MEMKey:  4,
-						v1.DISKKey: 50,
+						v1.CPUKey:  defaultCpuNum,
+						v1.MEMKey:  defaultDiskGb,
+						v1.DISKKey: defaultMemoryGb,
 					},
+					Image: defaultImage,
 				})
 			}
 			if nodes != 0 {
@@ -77,10 +82,11 @@ func newRunCmd() *cobra.Command {
 					Count:  nodes,
 					Mounts: map[string]string{},
 					Resources: map[string]int{
-						v1.CPUKey:  2,
-						v1.MEMKey:  4,
-						v1.DISKKey: 50,
+						v1.CPUKey:  defaultCpuNum,
+						v1.MEMKey:  defaultDiskGb,
+						v1.DISKKey: defaultMemoryGb,
 					},
+					Image: defaultImage,
 				})
 			}
 			return nil
@@ -91,9 +97,15 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().StringVarP(&vm.Spec.SSH.PublicFile, "pub", "p", path.Join(fileutil.GetHomeDir(), ".ssh", "id_rsa.pub"), "selects a file from which the identity (public key) for public key authentication is read")
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
+
 	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
 	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
+	runCmd.Flags().StringVarP(&defaultImage, "default-image", "e", "18.04", "default image.")
+	runCmd.Flags().IntVarP(&defaultCpuNum, "default-node-cpu", "c", 4, "default vcpu num per node. ")
+	runCmd.Flags().IntVarP(&defaultMemoryGb, "default-node-mem", "m", 8, "default mem size per node. （GB） ")
+	runCmd.Flags().IntVarP(&defaultDiskGb, "default-node-disk", "k", 100, "default disk size per node. （GB）")
+
 	return runCmd
 }
 

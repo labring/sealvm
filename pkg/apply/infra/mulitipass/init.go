@@ -246,7 +246,8 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 		debugFlag = "-vvv"
 	}
 	if _, err := r.GetById(strings.GetID(infra.Name, host.Role, index)); err != nil {
-		cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag)
+		cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
+		logger.Info("executing... %s \n", cmd)
 		return exec.Cmd("bash", "-c", cmd)
 	}
 	return nil
