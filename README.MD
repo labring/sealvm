@@ -12,7 +12,7 @@ sealvm run --nodes=1
 
 - init vms add dev 
 ```shell
-sealvm run --nodes=1   --dev --dev-mounts=/Users/xxx:/Users/xxx --image 18.04 [22.04/20.04]
+ sealvm run --nodes=1 --dev --dev-mounts /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos:/root/go/src/github.com/labring/sealos 
 ```
 
 - reset vms

@@ -30,6 +30,7 @@ import (
 
 var (
 	debug          bool
+	name           string
 	clusterRootDir string
 )
 
