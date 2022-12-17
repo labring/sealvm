@@ -23,8 +23,7 @@ import (
 type VirtualMachineFile struct {
 	name           string
 	VirtualMachine *v1.VirtualMachine
-	//Actions []v2.Action
-	once sync.Once
+	once           sync.Once
 }
 
 type Interface interface {
@@ -36,35 +35,7 @@ func (c *VirtualMachineFile) GetVirtualMachine() *v1.VirtualMachine {
 	return c.VirtualMachine
 }
 
-//func (c *VirtualMachineFile) GetPlugins() []v1.Plugin {
-//	return c.Plugins
-//}
-
 type OptionFunc func(*VirtualMachineFile)
-
-//func WithCustomConfigFiles(files []string) OptionFunc {
-//	return func(c *VirtualMachineFile) {
-//		c.customConfigFiles = files
-//	}
-//}
-//
-//func WithCustomValues(valueFiles []string) OptionFunc {
-//	return func(c *VirtualMachineFile) {
-//		c.customValues = valueFiles
-//	}
-//}
-//
-//func WithCustomSets(sets []string) OptionFunc {
-//	return func(c *VirtualMachineFile) {
-//		c.customSets = sets
-//	}
-//}
-//
-//func WithCustomEnvs(envs []string) OptionFunc {
-//	return func(c *VirtualMachineFile) {
-//		c.customEnvs = envs
-//	}
-//}
 
 func NewVirtualMachineFile(name string, opts ...OptionFunc) Interface {
 	cf := &VirtualMachineFile{

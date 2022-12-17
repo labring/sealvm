@@ -14,19 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package action
+package process
 
 import (
+	"errors"
 	"github.com/labring/sealvm/pkg/configs"
 	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
-type driver struct {
-	Desired *v1.Action
-	Current *v1.Action
-	Config  configs.Interface
-}
+func NewInterfaceFromName(name string) (Interface, error) {
+	cf := configs.NewVirtualMachineFile(name)
+	err := cf.Process()
+	if err != nil && err != configs.ErrVirtualMachineFileNotExists {
+		return nil, err
+	}
+	i := cf.GetVirtualMachine()
 
-func (c *driver) Apply() error {
-	return nil
+	switch i.Spec.Type {
+	case v1.MultipassType:
+		return &mulitipass{vm: i}, nil
+	default:
+		return nil, errors.New("not support type:" + i.Spec.Type)
+	}
 }
