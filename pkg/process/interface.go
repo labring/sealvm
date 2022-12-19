@@ -24,7 +24,7 @@ import (
 type Interface interface {
 	List() error
 	Exec(exec ssh.Exec, shell string) error
-	Transfer()
+	Transfer(exec ssh.Exec, src, dest string) error
 	Inspect(name string)
 	VMInfo() *v1.VirtualMachine
 }
