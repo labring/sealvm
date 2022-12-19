@@ -16,7 +16,10 @@ limitations under the License.
 
 package process
 
-import v1 "github.com/labring/sealvm/types/api/v1"
+import (
+	"github.com/labring/sealvm/pkg/ssh"
+	v1 "github.com/labring/sealvm/types/api/v1"
+)
 
 type mulitipass struct {
 	vm *v1.VirtualMachine
@@ -25,9 +28,15 @@ type mulitipass struct {
 func (mp *mulitipass) List() error {
 	return printVMs(mp.vm)
 }
-func (*mulitipass) ExecLocal() {}
-func (*mulitipass) Exec()      {}
-func (*mulitipass) Transfer()  {}
+func (mp *mulitipass) Exec(exec ssh.Exec, shell string) error {
+	return exec.RunCmd(shell)
+
+}
+func (*mulitipass) Transfer() {}
 func (mp *mulitipass) Inspect(name string) {
 	inspectHostname(mp.vm, name)
+}
+
+func (mp *mulitipass) VMInfo() *v1.VirtualMachine {
+	return mp.vm
 }
