@@ -170,6 +170,10 @@ func (c *VirtualMachine) GetNodeIPList() []string {
 	return iputils.GetHostIPs(c.GetIPSByRole(NODE))
 }
 
+func (c *VirtualMachine) GetALLIPList() []string {
+	return append(iputils.GetHostIPs(c.GetIPSByRole(NODE)), iputils.GetHostIPs(c.GetIPSByRole(GOLANG))...)
+}
+
 func (c *VirtualMachine) GetMaster0IP() string {
 	if len(c.Spec.Hosts) == 0 {
 		return ""

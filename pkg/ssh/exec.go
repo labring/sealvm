@@ -36,7 +36,7 @@ type Exec struct {
 func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (Exec, error) {
 	var ipList []string
 	if roles == "" {
-		ipList = append(vm.GetNodeIPList())
+		ipList = append(vm.GetALLIPList())
 	} else {
 		roleList := strings.Split(roles, ",")
 		for _, role := range roleList {
