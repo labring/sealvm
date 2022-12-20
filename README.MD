@@ -31,7 +31,8 @@ sealvm exec -r golang "sudo apt-get install -y make gcc-aarch64-linux-gnu gcc-x8
 ```shell
 sealvm exec -r golang "bash golang-init"
 sealvm exec -r golang "source /etc/profile.d/golang.sh && echo \$PATH"
-sealvm exec -r golang "cd /root/go/src/github.com/labring/sealos && git config --global --add safe.directory /root/go/src/github.com/labring/sealos &&  source /etc/profile.d/golang.sh &&  make build"
+sealvm exec -r golang "git config --global --add safe.directory /root/go/src/github.com/labring/sealos"
+sealvm exec -r golang "cd /root/go/src/github.com/labring/sealos &&  source /etc/profile.d/golang.sh &&  make build"
 ```
 
 - install k8s
