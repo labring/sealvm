@@ -59,7 +59,7 @@ func newScpCmd() *cobra.Command {
 					}
 				}
 			}
-			var exec ssh.Exec
+			var exec *ssh.Exec
 			if len(ips) > 0 {
 				exec, err = ssh.NewExecCmdFromIPs(i.VMInfo(), ips)
 				if err != nil {
@@ -67,10 +67,13 @@ func newScpCmd() *cobra.Command {
 				}
 
 			}
-			exec, err = ssh.NewExecCmdFromRoles(i.VMInfo(), roles)
-			if err != nil {
-				return err
+			if exec == nil {
+				exec, err = ssh.NewExecCmdFromRoles(i.VMInfo(), roles)
+				if err != nil {
+					return err
+				}
 			}
+
 			return exec.RunCopy(args[0], args[1])
 		},
 	}

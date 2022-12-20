@@ -29,11 +29,11 @@ func (mp *mulitipass) List() error {
 	return printVMs(mp.vm)
 }
 
-func (mp *mulitipass) Exec(exec ssh.Exec, shell string) error {
+func (mp *mulitipass) Exec(exec *ssh.Exec, shell string) error {
 	return exec.RunCmd(shell)
 }
 
-func (*mulitipass) Transfer(exec ssh.Exec, src, dstFilePath string) error {
+func (*mulitipass) Transfer(exec *ssh.Exec, src, dstFilePath string) error {
 	return exec.RunCopy(src, dstFilePath)
 }
 func (mp *mulitipass) Inspect(name string) {

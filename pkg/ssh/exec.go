@@ -33,7 +33,7 @@ type Exec struct {
 	ipList []string
 }
 
-func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (Exec, error) {
+func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (*Exec, error) {
 	var ipList []string
 	if roles == "" {
 		ipList = append(vm.GetALLIPList())
@@ -43,14 +43,14 @@ func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (Exec, error) {
 			ipList = append(ipList, vm.GetIPSByRole(role)...)
 		}
 		if len(ipList) == 0 {
-			return Exec{}, fmt.Errorf("failed to get ipList, please check your roles label")
+			return nil, fmt.Errorf("failed to get ipList, please check your roles label")
 		}
 	}
-	return Exec{vm: vm, ipList: ipList}, nil
+	return &Exec{vm: vm, ipList: ipList}, nil
 }
 
-func NewExecCmdFromIPs(vm *v1.VirtualMachine, ips []string) (Exec, error) {
-	return Exec{vm: vm, ipList: ips}, nil
+func NewExecCmdFromIPs(vm *v1.VirtualMachine, ips []string) (*Exec, error) {
+	return &Exec{vm: vm, ipList: ips}, nil
 }
 
 func (e *Exec) RunCmd(cmd string) error {
