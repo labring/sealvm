@@ -25,11 +25,10 @@ import (
 func NewInterfaceFromName(name string) (Interface, error) {
 	cf := configs.NewVirtualMachineFile(name)
 	err := cf.Process()
-	if err != nil && err != configs.ErrVirtualMachineFileNotExists {
+	if err != nil {
 		return nil, err
 	}
 	i := cf.GetVirtualMachine()
-
 	switch i.Spec.Type {
 	case v1.MultipassType:
 		return &mulitipass{vm: i}, nil
