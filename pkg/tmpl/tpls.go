@@ -72,8 +72,8 @@ const GolangTpl Tpl = `write_files:
     chmod 0755 /etc/profile.d/golang.sh
     rm -rf /root/go${version}.linux-${arch}.tar.gz
     mkdir -p /root/go/src/github.com/labring /root/go/bin /root/go/pkg 
+    source /etc/profile.d/golang.sh
     go env -w GOPROXY="https://goproxy.io,direct"
-    bash /etc/profile.d/golang.sh
   path: /usr/bin/golang-init
   permissions: '0755' 
 runcmd:

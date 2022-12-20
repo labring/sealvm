@@ -23,8 +23,8 @@ import (
 
 type Interface interface {
 	List() error
-	Exec(exec ssh.Exec, shell string) error
-	Transfer(exec ssh.Exec, src, dest string) error
+	Exec(exec *ssh.Exec, shell string) error
+	Transfer(exec *ssh.Exec, src, dest string) error
 	Inspect(name string)
 	VMInfo() *v1.VirtualMachine
 }
