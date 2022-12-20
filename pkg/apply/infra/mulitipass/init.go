@@ -160,10 +160,18 @@ func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
 			eg.Go(func() error {
 				if dHost.Mounts != nil {
 					for h, m := range dHost.Mounts {
-						if _, ok := infra.Status.Hosts[index].Mounts[h]; !ok {
+						fn := func() {
 							cmd := fmt.Sprintf("multipass mount %s %s:%s", h, strings.GetID(infra.Name, dHost.Role, index), m)
 							logger.Info("executing... %s \n", cmd)
 							_ = exec.Cmd("bash", "-c", cmd)
+						}
+						hostBool := len(infra.Status.Hosts) == 0
+						if hostBool {
+							fn()
+						} else {
+							if _, ok := infra.Status.Hosts[index].Mounts[h]; !ok {
+								fn()
+							}
 						}
 					}
 				}
