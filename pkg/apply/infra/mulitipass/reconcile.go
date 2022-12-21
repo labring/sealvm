@@ -202,6 +202,17 @@ func (r *MultiPassVirtualMachine) Inspect(name string, role v1.Host, index int) 
 	hostStatus.ImageID, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "image_hash")
 	hostStatus.ImageName, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "release")
 	hostStatus.IPs, _, _ = unstructured.NestedStringSlice(outStruct, "info", hostStatus.ID, "ipv4")
+	newIPs := make([]string, 0)
+	if len(hostStatus.IPs) > 0 {
+		for _, ip := range hostStatus.IPs {
+			if strings2.HasPrefix(ip, "172.17") || strings2.HasPrefix(ip, "10.96") {
+				continue
+			} else {
+				newIPs = append(newIPs, ip)
+			}
+		}
+	}
+	hostStatus.IPs = newIPs
 	hostStatus.Index = index
 	mounts, _, _ := unstructured.NestedMap(outStruct, "info", hostStatus.ID, "mounts")
 	for k := range mounts {
