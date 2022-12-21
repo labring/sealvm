@@ -243,7 +243,7 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 			v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
 			continue
 		}
-		ips = append(ips, host.IPs...)
+		ips = append(ips, host.IPs[0])
 	}
 	err := ssh.WaitSSHReady(client, 6, ips...)
 	if err != nil {
