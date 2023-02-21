@@ -158,6 +158,15 @@ func (r *MultiPassVirtualMachine) Get(name, role string, index int) (string, err
 	return out, nil
 }
 
+func (r *MultiPassVirtualMachine) List() (string, error) {
+	cmd := fmt.Sprintf("multipass list --format json")
+	out, _ := exec.RunBashCmd(cmd)
+	if out == "" {
+		return "", errors.New("not found list instances")
+	}
+	return out, nil
+}
+
 func (r *MultiPassVirtualMachine) GetById(name string) (string, error) {
 	cmd := fmt.Sprintf("multipass info %s --format=json", name)
 	out, _ := exec.RunBashCmd(cmd)
@@ -221,4 +230,54 @@ func (r *MultiPassVirtualMachine) Inspect(name string, role v1.Host, index int) 
 	}
 
 	return hostStatus, nil
+}
+
+func (r *MultiPassVirtualMachine) InspectByList(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
+	type ListData struct {
+		List []struct {
+			Ipv4    []string `json:"ipv4"`
+			Name    string   `json:"name"`
+			Release string   `json:"release"`
+			State   string   `json:"state"`
+		} `json:"list"`
+	}
+
+	data, err := r.List()
+	if err != nil {
+		return nil, err
+	}
+	var outStruct ListData
+	err = json.Unmarshal([]byte(data), &outStruct)
+	if err != nil {
+		return nil, errors2.Wrap(err, "decode out json from multipass info failed")
+	}
+
+	for _, l := range outStruct.List {
+		if l.Name == strings.GetID(name, role.Role, index) {
+			newIPs := make([]string, 0)
+			if len(l.Ipv4) > 0 {
+				for _, ip := range l.Ipv4 {
+					if strings2.HasPrefix(ip, "172.17") || strings2.HasPrefix(ip, "10.96") {
+						continue
+					} else {
+						newIPs = append(newIPs, ip)
+					}
+				}
+			}
+
+			return &v1.VirtualMachineHostStatus{
+				State:     l.State,
+				Role:      role.Role,
+				ID:        strings.GetID(name, role.Role, index),
+				IPs:       newIPs,
+				ImageID:   "",
+				ImageName: l.Release,
+				Capacity:  nil,
+				Used:      map[string]string{},
+				Mounts:    map[string]string{},
+				Index:     index,
+			}, nil
+		}
+	}
+	return nil, errors.New("not found this instance")
 }

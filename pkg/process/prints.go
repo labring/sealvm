@@ -17,6 +17,7 @@ limitations under the License.
 package process
 
 import (
+	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/modood/table"
 )
@@ -30,15 +31,26 @@ func printVMs(vm *v1.VirtualMachine) error {
 		Image string
 	}
 	tables := make([]printTable, 0)
-	if len(vm.Status.Hosts) > 0 {
-		for _, h := range vm.Status.Hosts {
-			tables = append(tables, printTable{
-				Ipv4:  h.IPs,
-				Name:  h.ID,
-				Image: h.ImageName,
-				State: h.State,
-				Role:  h.Role,
-			})
+	for _, h := range vm.Spec.Hosts {
+		if h.Count > 0 {
+			for i := 0; i < h.Count; i++ {
+				status := vm.GetHostStatusByRoleIndex(h.Role, i)
+				if status == nil {
+					tables = append(tables, printTable{
+						Name:  strings.GetID(vm.Name, h.Role, i),
+						State: "UNKNOWN",
+						Role:  h.Role,
+					})
+				} else {
+					tables = append(tables, printTable{
+						Ipv4:  status.IPs,
+						Name:  status.ID,
+						Image: status.ImageName,
+						State: status.State,
+						Role:  h.Role,
+					})
+				}
+			}
 		}
 	}
 	table.OutputA(tables)
