@@ -205,7 +205,11 @@ func (r *MultiPassVirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 			if e := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				info, err = r.Inspect(infra.Name, host, i)
 				if err != nil {
-					return err
+					newInfo, nee := r.InspectByList(infra.Name, host, i)
+					if nee != nil {
+						return nee
+					}
+					info = newInfo
 				}
 				if info.State != "Running" {
 					return fmt.Errorf("instance %s is not running", infra.Name)
@@ -247,7 +251,7 @@ func (r *MultiPassVirtualMachine) PingVms(infra *v1.VirtualMachine) {
 	}
 	err := ssh.WaitSSHReady(client, 6, ips...)
 	if err != nil {
-		v1.SetConditionError(configCondition, "PingVMs", err)
+		logger.Error("ping vms is error: %+v", err)
 		return
 	}
 }
