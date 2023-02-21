@@ -137,10 +137,6 @@ func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
 }
 
 func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
-	if !v1.IsConditionsTrue(infra.Status.Conditions) {
-		logger.Info("Skip to exec MountsVMs:", r.Desired.Name)
-		return
-	}
 	logger.Info("Start to exec MountsVMs:", r.Desired.Name)
 	var configCondition = &v1.Condition{
 		Type:              "MountsVMs",
