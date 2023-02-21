@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/ssh"
@@ -125,6 +126,7 @@ func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
 			dHost := host
 			index := i
 			eg.Go(func() error {
+				time.Sleep(time.Duration(index) * time.Millisecond * 100)
 				return r.CreateVM(infra, &dHost, index)
 			})
 		}
