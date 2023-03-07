@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strconv"
 	strings2 "strings"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/labring/sealvm/pkg/apply/runtime"
@@ -85,6 +86,7 @@ func (r *MultiPassVirtualMachine) ApplyVMs(infra *v1.VirtualMachine) {
 			if hostObj != nil {
 				indexInt, err := strconv.Atoi(index)
 				if err == nil {
+					time.Sleep(time.Duration(indexInt) * time.Millisecond * 100)
 					return r.CreateVM(infra, hostObj, indexInt)
 				}
 				return err
