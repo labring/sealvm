@@ -63,7 +63,7 @@ const GolangTpl Tpl = `write_files:
   permissions: '0755'
 - content: |
     #!/bin/bash
-    version=1.19.1
+    version=1.20.2
     arch={{ .ARCH }}
     rm -rf /root/go${version}.linux-${arch}.tar.gz
     wget https://studygolang.com/dl/golang/go${version}.linux-${arch}.tar.gz -O /root/go${version}.linux-${arch}.tar.gz

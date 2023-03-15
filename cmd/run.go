@@ -108,7 +108,6 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().IntVarP(&defaultCpuNum, "default-node-cpu", "c", 2, "default vcpu num per node. ")
 	runCmd.Flags().IntVarP(&defaultMemoryGb, "default-node-mem", "m", 4, "default mem size per node. （GB） ")
 	runCmd.Flags().IntVarP(&defaultDiskGb, "default-node-disk", "k", 50, "default disk size per node. （GB）")
-
 	return runCmd
 }
 
