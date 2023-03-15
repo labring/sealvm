@@ -35,6 +35,14 @@ sealvm exec -r golang "git config --global --add safe.directory /root/go/src/git
 sealvm exec -r golang "cd /root/go/src/github.com/labring/sealos &&  source /etc/profile.d/golang.sh &&  make build"
 ```
 
+- sync time
+```shell
+sealvm exec -r golang "sudo apt-get update"
+sealvm exec -r golang "sudo apt-get install -y ntpdate"
+sealvm exec -r golang "sudo ntpdate -s ntp1.aliyun.com"
+```
+
+
 - install k8s
 ```shell
 sealvm exec -r golang "scp -o \"StrictHostKeyChecking no\" /root/go/src/github.com/labring/sealos/bin/linux_arm64/sealos root@192.168.64.55:/usr/bin/"
