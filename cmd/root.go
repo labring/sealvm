@@ -18,6 +18,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/labring/sealvm/pkg/system"
+	"github.com/labring/sealvm/pkg/template"
 	"os"
 	"path"
 	"runtime"
@@ -26,6 +28,7 @@ import (
 	"github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/spf13/cobra"
+	"k8s.io/kubectl/pkg/util/templates"
 )
 
 var (
@@ -63,6 +66,38 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logger")
 	rootCmd.PersistentFlags().StringVar(&clusterRootDir, "cluster-root", path.Join(file.GetHomeDir(), ".sealvm"), "cluster root directory")
+
+	groups := templates.CommandGroups{
+		{
+			Message: "VM Management Commands:",
+			Commands: []*cobra.Command{
+				//newApplyCmd(),
+				newRunCmd(),
+				newResetCmd(),
+				newInspectCmd(),
+				newListCmd(),
+			},
+		},
+		{
+			Message: "Remote Operation Commands:",
+			Commands: []*cobra.Command{
+				newExecCmd(),
+				newScpCmd(),
+			},
+		},
+		{
+			Message: "System Management Commands:",
+			Commands: []*cobra.Command{
+				newInstallCmd(),
+				system.NewConfigCmd(),
+				template.NewTemplateCmd(),
+				template.NewValuesCmd(),
+			},
+		},
+	}
+	groups.Add(rootCmd)
+	var filters []string
+	templates.ActsAsRootCommand(rootCmd, filters, groups...)
 }
 
 func onBootOnDie() {

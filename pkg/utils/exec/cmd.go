@@ -24,60 +24,12 @@ import (
 	strutil "github.com/labring/sealvm/pkg/utils/strings"
 )
 
-func Cmd(name string, args ...string) error {
-	logger.Debug("cmd for pipe in host: ", fmt.Sprintf("%s %s", name, strings.Join(args, " ")))
-	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
-	cmd := exec.Command(name, args[:]...) // #nosec
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
-}
-
-//func CmdForPipe(exe string, args ...string) error {
-//	logger.Debug("cmd for pipe in host: ", fmt.Sprintf("%s %s", exe, strings.Join(args, " ")))
-//	cmd := exec.Command(exe, args...)
-//	outReader, err := cmd.StdoutPipe()
-//	if err != nil {
-//		return fmt.Errorf("error creating StdoutPipe for cmd: #%v", err)
-//	}
-//
-//	errReader, err := cmd.StderrPipe()
-//	if err != nil {
-//		return fmt.Errorf("error creating StderrPipe for cmd: #%v", err)
-//	}
-//
-//	outScanner := bufio.NewScanner(outReader)
-//	go func() {
-//		for outScanner.Scan() {
-//			//logger.Info()
-//			_, _ = os.Stdout.Write([]byte(outScanner.Text() + "\n"))
-//		}
-//	}()
-//
-//	errScanner := bufio.NewScanner(errReader)
-//	go func() {
-//		for errScanner.Scan() {
-//			//logger.Info(errScanner.Text())
-//			_, _ = os.Stdout.Write([]byte(errScanner.Text() + "\n"))
-//		}
-//	}()
-//
-//	if err = cmd.Start(); err != nil {
-//		return fmt.Errorf("error starting cmd: #%v", err)
-//	}
-//
-//	if err = cmd.Wait(); err != nil {
-//		return fmt.Errorf("error waiting for cmd: #%v", err)
-//	}
-//
-//	return nil
-//}
-
-func Output(name string, args ...string) ([]byte, error) {
-	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
-	cmd := exec.Command(name, args[:]...) // #nosec
-	return cmd.CombinedOutput()
+func Cmd(cmd string, args ...string) error {
+	logger.Debug("cmd for pipe in host: ", fmt.Sprintf("%s %s", cmd, strings.Join(args, " ")))
+	cmder := exec.Command(cmd, args...)
+	cmder.Stdout = os.Stdout
+	cmder.Stderr = os.Stderr
+	return cmder.Run()
 }
 
 func RunSimpleCmd(cmd string) (string, error) {

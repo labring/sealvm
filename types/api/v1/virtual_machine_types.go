@@ -16,6 +16,7 @@ package v1
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/labring/sealvm/pkg/utils/iputils"
 	v1 "k8s.io/api/core/v1"
@@ -26,11 +27,9 @@ const MultipassType = "Multipass"
 
 // VirtualMachineSpec defines the desired state of VirtualMachine
 type VirtualMachineSpec struct {
-	Hosts   []Host `json:"hosts,omitempty"`
-	SSH     SSH    `json:"ssh"`
-	Type    string `json:"provider,omitempty"`
-	Proxy   string
-	NoProxy string
+	Hosts []Host `json:"hosts,omitempty"`
+	SSH   SSH    `json:"ssh"`
+	Type  string `json:"provider,omitempty"`
 }
 
 type SSH struct {
@@ -47,7 +46,7 @@ type Host struct {
 	// cpu: 2
 	// memory: 4
 	// other resources like GPU
-	Resources map[string]int `json:"resources,omitempty"`
+	Resources map[string]string `json:"resources,omitempty"`
 	// ecs.t5-lc1m2.large
 	Image string `json:"image,omitempty"`
 }
@@ -86,7 +85,7 @@ type VirtualMachineHostStatus struct {
 	IPs       []string          `json:"IPs,omitempty"`
 	ImageID   string            `json:"imageID,omitempty"`
 	ImageName string            `json:"imageName,omitempty"`
-	Capacity  map[string]int    `json:"capacity"`
+	Capacity  map[string]string `json:"capacity"`
 	Used      map[string]string `json:"used"`
 	Mounts    map[string]string `json:"mounts,omitempty"`
 	Index     int               `json:"index,omitempty"`
@@ -142,6 +141,14 @@ func (c *VirtualMachine) GetIPSByRole(role string) []string {
 		}
 	}
 	return hosts
+}
+
+func (c *VirtualMachine) GetRoles() []string {
+	roles := sets.NewString()
+	for _, host := range c.Spec.Hosts {
+		roles = roles.Insert(host.Role)
+	}
+	return roles.List()
 }
 
 func (c *VirtualMachine) GetHostByRole(role string) *Host {
