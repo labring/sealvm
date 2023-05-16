@@ -17,8 +17,6 @@ limitations under the License.
 package system
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -72,11 +70,7 @@ func newListCmd() *cobra.Command {
 		Short: "Print a list of configuration keys and values",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			list := ConfigOptions()
-			for _, v := range list {
-				data, _ := Get(v.Key)
-				println(fmt.Sprintf("%s=%s", v.Key, data))
-			}
+			List()
 			return nil
 		},
 	}

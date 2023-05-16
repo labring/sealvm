@@ -17,16 +17,16 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/template"
+	"github.com/labring/sealvm/pkg/utils/confirm"
 	"github.com/labring/sealvm/pkg/utils/logger"
-	"path/filepath"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 	"strings"
 
 	"github.com/labring/sealvm/pkg/apply"
-	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,7 @@ import (
 func newRunCmd() *cobra.Command {
 	vm := v1.VirtualMachine{}
 	val := template.NewValues()
-	var nodes int
+	var nodes string
 	var dev bool
 	//var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
 	var defaultImage string
@@ -52,18 +52,18 @@ func newRunCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			system.List()
+			template.NewTpl().List()
+			template.NewValues().List()
 			if len(args) != 0 {
 				defaultImage = args[0]
 			} else {
-				defaultImageLocal, _ := system.Get(system.DefaultImageKey)
-				if defaultImageLocal != "" {
-					if !fileutil.IsExist(defaultImageLocal) {
-						return fmt.Errorf("system config image not set or image file is not exist")
-					}
-					if !filepath.IsAbs(defaultImageLocal) {
-						return errors.New("image local must using abs path")
-					}
-					defaultImage = fmt.Sprintf("file://%s", defaultImageLocal)
+				newDefaultImage, err := apply.GetDefaultImage()
+				if err != nil {
+					return err
+				}
+				if newDefaultImage != "" {
+					defaultImage = newDefaultImage
 				}
 			}
 			//var defaultCpuNum int
@@ -78,39 +78,24 @@ func newRunCmd() *cobra.Command {
 			if strings.Contains(vm.Name, "-") {
 				return fmt.Errorf("your cluster name contains chart '-' ")
 			}
-			var mountPoints map[string]string
-			for _, m := range mounts {
-				if strings.TrimSpace(m) != "" {
-					points := strings.Split(m, ":")
-					if len(points) != 2 {
-						return fmt.Errorf("mount args format is error , ex /dd:/ff")
-					}
-					mountPoints[points[0]] = points[1]
-				}
-			}
-
 			if err := checkInstall(vm.Spec.Type); err != nil {
 				return err
 			}
-			if dev {
-
-				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.GOLANG,
-					Count:  1,
-					Mounts: mountPoints,
-					Resources: map[string]string{
-						v1.CPUKey:  defaultCpuNum,
-						v1.DISKKey: defaultDiskGb,
-						v1.MEMKey:  defaultMemoryGb,
-					},
-					Image: defaultImage,
-				})
+			mountPoints, err := apply.ParseMounts(mounts)
+			if err != nil {
+				return errors.WithMessage(err, "parse mounts error")
 			}
-			if nodes != 0 {
+
+			nodeMap, err := apply.ParseNodes(nodes)
+			if err != nil {
+				return errors.WithMessage(err, "parse nodes error")
+			}
+
+			for n, node := range nodeMap {
 				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.NODE,
-					Count:  nodes,
-					Mounts: mountPoints,
+					Role:   n,
+					Count:  node,
+					Mounts: mountPoints[n],
 					Resources: map[string]string{
 						v1.CPUKey:  defaultCpuNum,
 						v1.DISKKey: defaultDiskGb,
@@ -120,19 +105,22 @@ func newRunCmd() *cobra.Command {
 				})
 			}
 			vm.Spec.SSH.PublicFile = val.Get("PublicKey")
-			if vm.Spec.SSH.PublicFile == "" {
-				return fmt.Errorf("public key is required,please set values using 'sealvm values set'")
-			}
 			vm.Spec.SSH.PkFile = val.Get("PrivateKey")
-			if vm.Spec.SSH.PkFile == "" {
-				return fmt.Errorf("private key is required,please set values using 'sealvm values set'")
+			data, err := yaml.Marshal(&vm)
+			if err != nil {
+				return err
 			}
-			tpl := template.NewTpl()
-			for _, r := range vm.GetRoles() {
-				_, err := tpl.Get(r)
-				if err != nil {
-					return fmt.Errorf("template role %s is not exist", r)
+			logger.Debug("vm yaml is %s", string(data))
+			if yes, err := confirm.Confirm("Are you sure to run this command?", "you have canceled to crate these vms !"); err != nil {
+				return err
+			} else {
+				if !yes {
+					return errors.New("cancelled")
 				}
+			}
+			err = apply.ValidateTemplate(&vm)
+			if err != nil {
+				return err
 			}
 			return nil
 		},
@@ -141,13 +129,9 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVar(&vm.Name, "name", "default", "name of cluster to applied init action")
 
-	runCmd.Flags().IntVarP(&nodes, "nodes", "n", 0, "number of nodes")
-	runCmd.Flags().StringSliceVarP(&mounts, "mounts", "m", []string{}, "mounts for vm")
+	runCmd.Flags().StringVarP(&nodes, "nodes", "n", "", "number of nodes, eg: node:1,node2:2")
+	runCmd.Flags().StringSliceVarP(&mounts, "mounts", "m", []string{}, "mounts of nodes, eg: node@/home/user:/root/go/src")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
-	//runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
-	//runCmd.Flags().IntVarP(&defaultCpuNum, "default-node-cpu", "c", 2, "default vcpu num per node. ")
-	//runCmd.Flags().IntVarP(&defaultMemoryGb, "default-node-mem", "m", 4, "default mem size per node. （GB） ")
-	//runCmd.Flags().IntVarP(&defaultDiskGb, "default-node-disk", "k", 50, "default disk size per node. （GB）")
 	return runCmd
 }
 

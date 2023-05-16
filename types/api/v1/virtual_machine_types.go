@@ -121,9 +121,6 @@ func init() {
 // Language: go
 
 var (
-	NODE   = "node"
-	GOLANG = "golang"
-
 	CPUKey  = "cpu"
 	MEMKey  = "memory"
 	DISKKey = "disk"
@@ -173,12 +170,12 @@ func (c *VirtualMachine) GetSSH() SSH {
 	return c.Spec.SSH
 }
 
-func (c *VirtualMachine) GetNodeIPList() []string {
-	return iputils.GetHostIPs(c.GetIPSByRole(NODE))
-}
-
 func (c *VirtualMachine) GetALLIPList() []string {
-	return append(iputils.GetHostIPs(c.GetIPSByRole(NODE)), iputils.GetHostIPs(c.GetIPSByRole(GOLANG))...)
+	ips := make([]string, 0)
+	for _, r := range c.GetRoles() {
+		ips = append(ips, c.GetIPSByRole(r)...)
+	}
+	return ips
 }
 
 func (c *VirtualMachine) GetMaster0IP() string {

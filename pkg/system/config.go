@@ -18,18 +18,48 @@ package system
 
 import (
 	"fmt"
-	"os"
-	"strings"
+	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/utils/file"
+	"github.com/labring/sealvm/pkg/utils/yaml"
+	"path"
 )
 
 type envSystemConfig struct{}
 
 func Get(key string) (string, error) {
-	return globalConfig.getValueOrDefault(key)
+	return globalConfig.getValue(key)
 }
 
 func Set(key, value string) error {
 	return globalConfig.setValue(key, value)
+}
+
+func List() {
+	list := ConfigOptions()
+	for _, v := range list {
+		data, _ := Get(v.Key)
+		println(fmt.Sprintf("%s=%s", v.Key, data))
+	}
+}
+
+func toDefaultYaml() {
+	list := ConfigOptions()
+	data := make(map[string]string)
+	for _, v := range list {
+		data[v.Key] = v.DefaultValue
+	}
+	_ = yaml.MarshalYamlToFile(path.Join(defaultDir, configFile), data)
+}
+
+func fromDefaultYaml() {
+	data := make(map[string]string)
+	_ = yaml.UnmarshalYamlFromFile(path.Join(defaultDir, configFile), &data)
+
+	for i, v := range ConfigOptions() {
+		if val, ok := data[v.Key]; ok {
+			ConfigOptions()[i].DefaultValue = val
+		}
+	}
 }
 
 var globalConfig *envSystemConfig
@@ -39,35 +69,29 @@ func init() {
 }
 
 type ConfigOption struct {
-	Key           string
-	Description   string
-	DefaultValue  string
-	OSEnv         string
-	AllowedValues []string
+	Key          string
+	Description  string
+	DefaultValue string
 }
 
 var configOptions = []ConfigOption{
 	{
 		Key:          DefaultCPUKey,
-		OSEnv:        "SEALVM_DEFAULT_CPU",
 		Description:  "sealvm default cpu cores",
 		DefaultValue: "2",
 	},
 	{
 		Key:          DefaultMemKey,
-		OSEnv:        "SEALVM_DEFAULT_MEM",
 		Description:  "sealvm default memory size. unit is GB",
 		DefaultValue: "4",
 	},
 	{
 		Key:          DefaultDISKKey,
-		OSEnv:        "SEALVM_DEFAULT_DISK",
 		Description:  "sealvm default disk size. unit is GB",
 		DefaultValue: "50",
 	},
 	{
 		Key:          DefaultImageKey,
-		OSEnv:        "SEALVM_DEFAULT_IMAGE",
 		Description:  "sealvm default image local",
 		DefaultValue: "",
 	},
@@ -80,15 +104,22 @@ const (
 	DefaultImageKey = "default_image"
 )
 
-func (*envSystemConfig) getValueOrDefault(key string) (string, error) {
+var defaultDir = path.Join(configs.DefaultRootfsDir(), "etc")
+
+const configFile = "default.cfg"
+
+func init() {
+	filePath := path.Join(defaultDir, configFile)
+	if !file.IsExist(filePath) {
+		toDefaultYaml()
+	} else {
+		fromDefaultYaml()
+	}
+}
+
+func (*envSystemConfig) getValue(key string) (string, error) {
 	for _, option := range configOptions {
 		if option.Key == key {
-			if option.OSEnv == "" {
-				option.OSEnv = strings.ReplaceAll(strings.ToUpper("sealvm"+"_"+option.Key), "-", "_")
-			}
-			if value, ok := os.LookupEnv(option.OSEnv); ok {
-				return value, nil
-			}
 			return option.DefaultValue, nil
 		}
 	}
@@ -96,21 +127,12 @@ func (*envSystemConfig) getValueOrDefault(key string) (string, error) {
 }
 
 func (*envSystemConfig) setValue(key, value string) error {
-	for _, option := range configOptions {
+	for i, option := range configOptions {
 		if option.Key == key {
-			if option.OSEnv == "" {
-				return fmt.Errorf("not support set key %s, env not set", key)
-			}
-			if option.AllowedValues != nil {
-				for _, allowedValue := range option.AllowedValues {
-					if allowedValue == value {
-						return os.Setenv(option.OSEnv, value)
-					}
-				}
-				return fmt.Errorf("value %s is not allowed for key %s", value, key)
-			}
+			configOptions[i].DefaultValue = value
 		}
 	}
+	toDefaultYaml()
 	return nil
 }
 
