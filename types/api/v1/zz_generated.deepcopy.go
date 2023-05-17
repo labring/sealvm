@@ -157,7 +157,7 @@ func (in *Host) DeepCopyInto(out *Host) {
 	}
 	if in.Resources != nil {
 		in, out := &in.Resources, &out.Resources
-		*out = make(map[string]int, len(*in))
+		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -226,7 +226,7 @@ func (in *VirtualMachineHostStatus) DeepCopyInto(out *VirtualMachineHostStatus) 
 	}
 	if in.Capacity != nil {
 		in, out := &in.Capacity, &out.Capacity
-		*out = make(map[string]int, len(*in))
+		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

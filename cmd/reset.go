@@ -16,7 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"github.com/labring/sealvm/pkg/apply"
+	"github.com/labring/sealvm/pkg/utils/confirm"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -37,6 +39,13 @@ func newResetCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if yes, err := confirm.Confirm("Are you sure to reset the vms?", "you have canceled to delete these vms !"); err != nil {
+				return err
+			} else {
+				if !yes {
+					return errors.New("cancelled")
+				}
+			}
 			if err := checkInstall(vm.Spec.Type); err != nil {
 				return err
 			}

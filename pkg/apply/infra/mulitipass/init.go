@@ -24,7 +24,7 @@ import (
 
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/ssh"
-	"github.com/labring/sealvm/pkg/tmpl"
+	"github.com/labring/sealvm/pkg/template"
 	"github.com/labring/sealvm/pkg/utils/exec"
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
@@ -98,13 +98,12 @@ func (r *MultiPassVirtualMachine) ApplyConfig(infra *v1.VirtualMachine) {
 	if !fileutil.IsExist(configs.GetDataDir(infra.Name)) {
 		_ = fileutil.MkDirs(configs.GetDataDir(infra.Name))
 	}
-	if err := tmpl.ExecuteNodesToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetCloudInitYamlByRole(infra.Name, v1.NODE)); err != nil {
-		v1.SetConditionError(configCondition, "ConfigNodeGenerateError", err)
-		return
-	}
 
-	if err := tmpl.ExecuteGolangToFile(infra.Spec.Proxy, infra.Spec.NoProxy, infra.Spec.SSH.PkFile, infra.Spec.SSH.PublicFile, GetCloudInitYamlByRole(infra.Name, v1.GOLANG)); err != nil {
-		v1.SetConditionError(configCondition, "ConfigGolangGenerateError", err)
+	for _, role := range infra.GetRoles() {
+		if err := template.EtcHostsTplExecuteToFile(role, GetCloudInitYamlByRole(infra.Name, role)); err != nil {
+			v1.SetConditionError(configCondition, "ConfigGenerateError", fmt.Errorf("failed to generate %s template config file: %v", role, err))
+			return
+		}
 	}
 }
 
@@ -260,8 +259,9 @@ func (r *MultiPassVirtualMachine) CreateVM(infra *v1.VirtualMachine, host *v1.Ho
 	if logger.IsDebugMode() {
 		debugFlag = "-vvv"
 	}
-	if _, err := r.GetById(strings.GetID(infra.Name, host.Role, index)); err != nil {
-		cmd := fmt.Sprintf("multipass launch --name %s --cpus %d --mem %dG --disk %dG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
+	vmID := strings.GetID(infra.Name, host.Role, index)
+	if _, err := r.GetById(vmID); err != nil {
+		cmd := fmt.Sprintf("multipass launch --name %s --cpus %s --mem %sG --disk %sG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
 		logger.Info("executing... %s \n", cmd)
 		return exec.Cmd("bash", "-c", cmd)
 	}

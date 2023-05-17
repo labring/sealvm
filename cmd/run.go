@@ -18,13 +18,15 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path"
+	"github.com/labring/sealvm/pkg/system"
+	"github.com/labring/sealvm/pkg/template"
+	"github.com/labring/sealvm/pkg/utils/confirm"
+	"github.com/labring/sealvm/pkg/utils/logger"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 	"strings"
 
 	"github.com/labring/sealvm/pkg/apply"
-	fileutil "github.com/labring/sealvm/pkg/utils/file"
-	"github.com/labring/sealvm/pkg/utils/maps"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/spf13/cobra"
 )
@@ -32,14 +34,12 @@ import (
 // runCmd represents the run command
 func newRunCmd() *cobra.Command {
 	vm := v1.VirtualMachine{}
-	var nodes int
+	val := template.NewValues()
+	var nodes string
 	var dev bool
-	var src string
-	var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
+	//var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
 	var defaultImage string
-	var defaultCpuNum int
-	var defaultDiskGb int
-	var defaultMemoryGb int
+	var mounts []string
 	var runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Run cloud native vm nodes",
@@ -52,27 +52,51 @@ func newRunCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			system.List()
+			template.NewTpl().List()
+			template.NewValues().List()
 			if len(args) != 0 {
 				defaultImage = args[0]
+			} else {
+				newDefaultImage, err := apply.GetDefaultImage()
+				if err != nil {
+					return err
+				}
+				if newDefaultImage != "" {
+					defaultImage = newDefaultImage
+				}
 			}
+			//var defaultCpuNum int
+			//var defaultDiskGb int
+			//var defaultMemoryGb int
+			defaultCpuNum, _ := system.Get(system.DefaultCPUKey)
+			defaultDiskGb, _ := system.Get(system.DefaultDISKKey)
+			defaultMemoryGb, _ := system.Get(system.DefaultMemKey)
+			logger.Debug("default cpu number is %s", defaultCpuNum)
+			logger.Debug("default disk number is %s", defaultDiskGb)
+			logger.Debug("default disk memory is %s", defaultMemoryGb)
 			if strings.Contains(vm.Name, "-") {
 				return fmt.Errorf("your cluster name contains chart '-' ")
 			}
-
 			if err := checkInstall(vm.Spec.Type); err != nil {
 				return err
 			}
-			if dev {
-				if src == "" {
-					return fmt.Errorf("src must be set")
-				}
-				mounts := maps.StringToMap(src, ",")
+			mountPoints, err := apply.ParseMounts(mounts)
+			if err != nil {
+				return errors.WithMessage(err, "parse mounts error")
+			}
 
+			nodeMap, err := apply.ParseNodes(nodes)
+			if err != nil {
+				return errors.WithMessage(err, "parse nodes error")
+			}
+
+			for n, node := range nodeMap {
 				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.GOLANG,
-					Count:  1,
-					Mounts: mounts,
-					Resources: map[string]int{
+					Role:   n,
+					Count:  node,
+					Mounts: mountPoints[n],
+					Resources: map[string]string{
 						v1.CPUKey:  defaultCpuNum,
 						v1.DISKKey: defaultDiskGb,
 						v1.MEMKey:  defaultMemoryGb,
@@ -80,34 +104,34 @@ func newRunCmd() *cobra.Command {
 					Image: defaultImage,
 				})
 			}
-			if nodes != 0 {
-				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   v1.NODE,
-					Count:  nodes,
-					Mounts: map[string]string{},
-					Resources: map[string]int{
-						v1.CPUKey:  defaultCpuNum,
-						v1.DISKKey: defaultDiskGb,
-						v1.MEMKey:  defaultMemoryGb,
-					},
-					Image: defaultImage,
-				})
+			vm.Spec.SSH.PublicFile = val.Get("PublicKey")
+			vm.Spec.SSH.PkFile = val.Get("PrivateKey")
+			data, err := yaml.Marshal(&vm)
+			if err != nil {
+				return err
+			}
+			logger.Debug("vm yaml is %s", string(data))
+			if yes, err := confirm.Confirm("Are you sure to run this command?", "you have canceled to crate these vms !"); err != nil {
+				return err
+			} else {
+				if !yes {
+					return errors.New("cancelled")
+				}
+			}
+			err = apply.ValidateTemplate(&vm)
+			if err != nil {
+				return err
 			}
 			return nil
 		},
 	}
-	runCmd.Flags().StringVarP(&vm.Spec.SSH.PkFile, "pk", "i", path.Join(fileutil.GetHomeDir(), ".ssh", "id_rsa"), "selects a file from which the identity (private key) for public key authentication is read")
 	runCmd.Flags().StringVar(&vm.Spec.SSH.PkPasswd, "pk-passwd", "", "passphrase for decrypting a PEM encoded private key")
-	runCmd.Flags().StringVarP(&vm.Spec.SSH.PublicFile, "pub", "p", path.Join(fileutil.GetHomeDir(), ".ssh", "id_rsa.pub"), "selects a file from which the identity (public key) for public key authentication is read")
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
-	runCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
+	runCmd.Flags().StringVar(&vm.Name, "name", "default", "name of cluster to applied init action")
 
-	runCmd.Flags().IntVarP(&nodes, "nodes", "w", 0, "number of nodes")
+	runCmd.Flags().StringVarP(&nodes, "nodes", "n", "", "number of nodes, eg: node:1,node2:2")
+	runCmd.Flags().StringSliceVarP(&mounts, "mounts", "m", []string{}, "mounts of nodes, eg: node@/home/user:/root/go/src")
 	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
-	runCmd.Flags().StringVarP(&src, "dev-mounts", "s", defaultMount, "gopath src dir")
-	runCmd.Flags().IntVarP(&defaultCpuNum, "default-node-cpu", "c", 2, "default vcpu num per node. ")
-	runCmd.Flags().IntVarP(&defaultMemoryGb, "default-node-mem", "m", 4, "default mem size per node. （GB） ")
-	runCmd.Flags().IntVarP(&defaultDiskGb, "default-node-disk", "k", 50, "default disk size per node. （GB）")
 	return runCmd
 }
 
