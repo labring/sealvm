@@ -51,7 +51,6 @@ func (r *MultiPassVirtualMachine) Init() {
 		r.InitStatus,
 		r.ApplyConfig,
 		r.CreateVMs,
-		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
 		r.FinalStatus,
@@ -125,7 +124,9 @@ func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
 			dHost := host
 			index := i
 			eg.Go(func() error {
-				time.Sleep(1 * time.Second)
+				d := time.Duration(index) * time.Second
+				time.Sleep(d)
+				logger.Info("Start to create a new vm:", dHost.Role, index)
 				return r.CreateVM(infra, &dHost, index)
 			})
 		}
@@ -133,51 +134,6 @@ func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
 	}
 	if err := eg.Wait(); err != nil {
 		v1.SetConditionError(configCondition, "CreateVMError", err)
-		return
-	}
-}
-
-func (r *MultiPassVirtualMachine) MountsVMs(infra *v1.VirtualMachine) {
-	logger.Info("Start to exec MountsVMs:", r.Desired.Name)
-	var configCondition = &v1.Condition{
-		Type:              "MountsVMs",
-		Status:            v12.ConditionTrue,
-		Reason:            "MountsVMs to instance",
-		Message:           "mount multipass success",
-		LastHeartbeatTime: metav1.Now(),
-	}
-	defer r.saveCondition(infra, configCondition)
-
-	eg, _ := errgroup.WithContext(context.Background())
-
-	for _, host := range infra.Spec.Hosts {
-		for i := 0; i < host.Count; i++ {
-			dHost := host
-			index := i
-			eg.Go(func() error {
-				if dHost.Mounts != nil {
-					for h, m := range dHost.Mounts {
-						fn := func() {
-							cmd := fmt.Sprintf("multipass mount %s %s:%s", h, strings.GetID(infra.Name, dHost.Role, index), m)
-							logger.Info("executing... %s \n", cmd)
-							_ = exec.Cmd("bash", "-c", cmd)
-						}
-						hostBool := len(infra.Status.Hosts) == 0
-						if hostBool {
-							fn()
-						} else {
-							if _, ok := infra.Status.Hosts[index].Mounts[h]; !ok {
-								fn()
-							}
-						}
-					}
-				}
-				return nil
-			})
-		}
-	}
-	if err := eg.Wait(); err != nil {
-		v1.SetConditionError(configCondition, "TransferSSHKeyError", err)
 		return
 	}
 }
