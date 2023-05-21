@@ -81,8 +81,7 @@ func init() {
 		{
 			Message: "Remote Operation Commands:",
 			Commands: []*cobra.Command{
-				newExecCmd(),
-				newScpCmd(),
+				newActionCmd(),
 			},
 		},
 		{

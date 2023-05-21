@@ -17,7 +17,6 @@ limitations under the License.
 package process
 
 import (
-	"github.com/labring/sealvm/pkg/ssh"
 	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
@@ -29,13 +28,6 @@ func (mp *mulitipass) List() error {
 	return printVMs(mp.vm)
 }
 
-func (mp *mulitipass) Exec(exec *ssh.Exec, shell string) error {
-	return exec.RunCmd(shell)
-}
-
-func (*mulitipass) Transfer(exec *ssh.Exec, src, dstFilePath string) error {
-	return exec.RunCopy(src, dstFilePath)
-}
 func (mp *mulitipass) Inspect(name string) {
 	inspectHostname(mp.vm, name)
 }

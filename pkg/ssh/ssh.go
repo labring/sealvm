@@ -68,21 +68,6 @@ func NewSSHClient(ssh *v1.SSH, isStdout bool) Interface {
 	}
 }
 
-func NewSSHByVirtualMachine(vm *v1.VirtualMachine, isStdout bool) (Interface, error) {
-	var ipList []string
-	sshClient := NewSSHClient(&vm.Spec.SSH, isStdout)
-	for _, host := range vm.Status.Hosts {
-		ipList = append(ipList, host.IPs...)
-	}
-
-	err := WaitSSHReady(sshClient, 6, ipList...)
-	if err != nil {
-		return nil, err
-	}
-
-	return sshClient, nil
-}
-
 type Client struct {
 	SSH  Interface
 	Host string

@@ -15,10 +15,8 @@
 package v1
 
 import (
-	"fmt"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/labring/sealvm/pkg/utils/iputils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,9 +37,8 @@ type SSH struct {
 }
 
 type Host struct {
-	Role   string            `json:"roles,omitempty"`
-	Count  int               `json:"count,omitempty"`
-	Mounts map[string]string `json:"mounts,omitempty"`
+	Role  string `json:"roles,omitempty"`
+	Count int    `json:"count,omitempty"`
 	// key values resources.
 	// cpu: 2
 	// memory: 4
@@ -126,20 +123,6 @@ var (
 	DISKKey = "disk"
 )
 
-func (c *Host) GetRoles() string {
-	return c.Role
-}
-
-func (c *VirtualMachine) GetIPSByRole(role string) []string {
-	var hosts []string
-	for _, host := range c.Status.Hosts {
-		if role == host.Role {
-			hosts = append(hosts, host.IPs...)
-		}
-	}
-	return hosts
-}
-
 func (c *VirtualMachine) GetRoles() []string {
 	roles := sets.NewString()
 	for _, host := range c.Spec.Hosts {
@@ -166,47 +149,11 @@ func (c *VirtualMachine) GetHostStatusByRoleIndex(role string, index int) *Virtu
 	return nil
 }
 
-func (c *VirtualMachine) GetSSH() SSH {
-	return c.Spec.SSH
-}
-
-func (c *VirtualMachine) GetALLIPList() []string {
-	ips := make([]string, 0)
-	for _, r := range c.GetRoles() {
-		ips = append(ips, c.GetIPSByRole(r)...)
-	}
-	return ips
-}
-
-func (c *VirtualMachine) GetMaster0IP() string {
-	if len(c.Spec.Hosts) == 0 {
-		return ""
-	}
-	if len(c.Status.Hosts[0].IPs) == 0 {
-		return ""
-	}
-	return iputils.GetHostIP(c.Status.Hosts[0].IPs[0])
-}
-
-func (c *VirtualMachine) GetMaster0IPAPIServer() string {
-	master0 := c.GetMaster0IP()
-	return fmt.Sprintf("https://%s:6443", master0)
-}
-
-func (c *VirtualMachine) GetRolesByIP(ip string) string {
+func (c *VirtualMachine) GetHostStatusByName(name string) *VirtualMachineHostStatus {
 	for _, host := range c.Status.Hosts {
-		if In(ip, host.IPs) {
-			return host.Role
+		if host.ID == name {
+			return &host
 		}
 	}
-	return ""
-}
-
-func In(key string, slice []string) bool {
-	for _, s := range slice {
-		if key == s {
-			return true
-		}
-	}
-	return false
+	return nil
 }

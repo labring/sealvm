@@ -18,13 +18,38 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ActionOn struct {
+	Role    string  `json:"role,omitempty"`
+	Indexes []int32 `json:"indexes,omitempty"`
+}
+
+type SourceAndTarget struct {
+	Source string `json:"source,omitempty"`
+	Target string `json:"target,omitempty"`
+}
+
+type ContentAndTarget struct {
+	Content string `json:"source,omitempty"`
+	Target  string `json:"target,omitempty"`
+}
+
+type ActionData struct {
+	// ActionMount mount src:dst
+	ActionMount *SourceAndTarget `json:"mount,omitempty"`
+	// ActionUmount umount dst
+	ActionUmount string `json:"umount,omitempty"`
+	// ActionExec exec cmd
+	ActionExec string `json:"exec,omitempty"`
+	// ActionCopy copy file src:dst
+	ActionCopy *SourceAndTarget `json:"copy,omitempty"`
+	// ActionCopyContent copy file content
+	ActionCopyContent *ContentAndTarget `json:"copyContent,omitempty"`
+}
+
 // ActionSpec defines the desired state of Action
 type ActionSpec struct {
-	//node node-0
-	//host
-	On   []string `json:"on,omitempty"`
-	Type string   `json:"type,omitempty"`
-	Cmd  []string `json:"cmd,omitempty"`
+	Ons  []ActionOn   `json:"ons,omitempty"`
+	Data []ActionData `json:"data,omitempty"`
 }
 
 type ActionPhase string
@@ -37,8 +62,8 @@ const (
 
 // ActionStatus defines the observed state of Action
 type ActionStatus struct {
-	Phase      ActionPhase `json:"phase,omitempty"`
-	Conditions []Condition `json:"conditions,omitempty" `
+	Phase   ActionPhase `json:"phase,omitempty"`
+	Message string      `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -47,8 +72,7 @@ type ActionStatus struct {
 
 // Action is the Schema for the action API
 type Action struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `json:",inline"`
 
 	Spec   ActionSpec   `json:"spec,omitempty"`
 	Status ActionStatus `json:"status,omitempty"`
