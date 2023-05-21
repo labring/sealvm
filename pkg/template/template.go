@@ -52,8 +52,15 @@ func (*template) Get(role string) (string, error) {
 	return string(data), nil
 }
 
-func (*template) Default() string {
-	return `write_files:
+func (m *template) Default(name string) {
+	tmpDir := path.Join(configs.DefaultRootfsDir(), "tmp")
+	_ = os.MkdirAll(tmpDir, 0755)
+	newDir, _ := fileutil.MkTmpdir(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(newDir)
+	}()
+	newFile := path.Join(newDir, "template-generator.yaml")
+	content := []byte(`write_files:
 - content: |
     export https_proxy=http://{{ .HTTPProxy }} http_proxy=http://{{ .HTTPProxy }} all_proxy=socks5://{{ .SocketProxy }}
     export no_proxy=localhost,127.0.0.1,localaddress,.localdomain.com,apiserver.cluster.local,{{ .NoProxy }}
@@ -73,7 +80,11 @@ runcmd:
   - echo "{{ $result := readFile .PrivateKey }}{{ b64enc $result }}" | base64 -d >> /root/.ssh/id_rsa
   - chmod 600 /root/.ssh/id_rsa
   - sed -i "/update_etc_hosts/c \ - ['update_etc_hosts', 'once-per-instance']" /etc/cloud/cloud.cfg
-  - touch /var/lib/cloud/instance/sem/config_update_etc_hosts`
+  - touch /var/lib/cloud/instance/sem/config_update_etc_hosts`)
+	_ = fileutil.WriteFile(newFile, content)
+	copyToPath := path.Join(defaultDir, fmt.Sprintf("%s%s", name, templateSuffix))
+	_ = fileutil.Copy(newFile, copyToPath)
+	logger.Info("Sync template role=%s config success.", name)
 }
 
 func (*template) Set() error {

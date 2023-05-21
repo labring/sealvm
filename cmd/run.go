@@ -39,9 +39,9 @@ func newRunCmd() *cobra.Command {
 	//var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
 	var defaultImage string
 	var runCmd = &cobra.Command{
-		Use:   "run",
-		Short: "Run cloud native vm nodes",
-		Long:  `sealvm run --nodes 1  20.04`,
+		Use:     "run",
+		Short:   "Run cloud native vm nodes",
+		Example: `sealvm run -n node:2,master:1`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			applier, err := apply.NewApplierFromArgs(&vm)
 			if err != nil {

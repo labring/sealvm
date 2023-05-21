@@ -27,6 +27,8 @@ func newActionCmd() *cobra.Command {
 	var actionCmd = &cobra.Command{
 		Use:  "action",
 		Args: cobra.NoArgs,
+		Example: `sealvm action -n default -f action.yaml
+sealvm action -p`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printDefault {
 				return actions.PrintDefault()

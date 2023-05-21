@@ -22,6 +22,7 @@ import (
 	"github.com/labring/sealvm/pkg/utils/confirm"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func NewTemplateCmd() *cobra.Command {
@@ -117,16 +118,36 @@ func newRestCmd() *cobra.Command {
 }
 
 func newDefaultCmd() *cobra.Command {
-	var getCmd = &cobra.Command{
-		Use:   "default",
-		Short: "Print default template",
-		Args:  cobra.NoArgs,
+	var roles []string
+	var defaultCmd = &cobra.Command{
+		Use:     "default",
+		Short:   "set default template for roles",
+		Args:    cobra.NoArgs,
+		Example: `sealvm template default -r master -r node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t := template{}
-			tpl := t.Default()
-			fmt.Println(tpl)
+			prompt := fmt.Sprintf("are you sure to set default template for %v?", roles)
+			cancelledMsg := "you have canceled to set default template"
+			yes, err := confirm.Confirm(prompt, cancelledMsg)
+			if err != nil {
+				return err
+			}
+			if !yes {
+				return errors.New("cancelled")
+			}
+			for _, role := range roles {
+				t.Default(role)
+			}
+			t.List()
 			return nil
 		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if len(roles) == 0 {
+				logger.Error("roles is empty")
+				os.Exit(1)
+			}
+		},
 	}
-	return getCmd
+	defaultCmd.Flags().StringSliceVarP(&roles, "roles", "r", []string{}, "roles to set default template")
+	return defaultCmd
 }
