@@ -23,3 +23,7 @@ spec:
         cat /root/sealos.sh
   ons:
     - role: master
+    - role: worker
+      indexes:
+        - 0
+        - 1
