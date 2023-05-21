@@ -1,6 +1,0 @@
-runcmd:
-  - bash /usr/bin/golang-init
-  - go env -w GOPROXY="https://goproxy.io,direct"
-  - sudo apt-get update
-  - sudo apt-get -y upgrade
-  - sudo apt-get install -y make gcc-aarch64-linux-gnu gcc-x86-64-linux-gnu

@@ -17,14 +17,11 @@ limitations under the License.
 package process
 
 import (
-	"github.com/labring/sealvm/pkg/ssh"
 	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 type Interface interface {
 	List() error
-	Exec(exec *ssh.Exec, shell string) error
-	Transfer(exec *ssh.Exec, src, dest string) error
 	Inspect(name string)
 	VMInfo() *v1.VirtualMachine
 }

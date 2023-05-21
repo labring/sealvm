@@ -45,7 +45,6 @@ func (r *MultiPassVirtualMachine) Reconcile(diff runtime.Diff) {
 		r.InitStatus,
 		r.ApplyConfig,
 		r.ApplyVMs,
-		r.MountsVMs,
 		r.SyncVMs,
 		r.PingVms,
 		r.FinalStatus,

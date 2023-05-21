@@ -1,4 +1,0 @@
-runcmd:
-  - echo "deb [trusted=yes] https://apt.fury.io/labring/ /" | tee /etc/apt/sources.list.d/labring.list
-  - sudo apt-get update
-  - sudo apt-get -y upgrade

@@ -1,0 +1,25 @@
+apiVersion: virtual-machine.sealos.io/v1
+kind: Action
+spec:
+  data:
+    - mount:
+        source: /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos
+        target: /root/go/src/github.com/labring/sealos
+    - umount: /root/go/src/github.com/labring/sealos
+    - exec: |-
+        ls -l /
+        echo "ddff"
+    - copy:
+        source: /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos/README.md
+        target: /root/README.md
+    - exec: |-
+        ls /root
+    - copyContent:
+        target: /root/sealos.sh
+        content: |-
+          write code
+          dfff
+    - exec: |-
+        cat /root/sealos.sh
+  ons:
+    - role: master

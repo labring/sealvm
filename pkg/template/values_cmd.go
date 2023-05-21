@@ -40,9 +40,10 @@ See https://github.com/labring/sealvm/blob/main/pkg/tmpl/funcs.yaml
 
 func newValuesSetCmd() *cobra.Command {
 	var getCmd = &cobra.Command{
-		Use:   "set",
-		Short: "Update values for template",
-		Args:  cobra.NoArgs,
+		Use:     "set",
+		Short:   "Update values for template",
+		Args:    cobra.NoArgs,
+		Example: `sealvm values set`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t := values{}
 			return t.Set()
@@ -53,9 +54,10 @@ func newValuesSetCmd() *cobra.Command {
 
 func newValuesListCmd() *cobra.Command {
 	var getCmd = &cobra.Command{
-		Use:   "list",
-		Short: "Print a list of template",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "Print a list of template",
+		Example: `sealvm values list`,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t := values{}
 			logger.Info("Listing all values:")
@@ -72,7 +74,8 @@ func newValuesDefaultCmd() *cobra.Command {
 		Short: "Set and display default values",
 		Long: `This command will reset all values to their defaults and then display them. 
 The default values are pre-defined and they include HTTPProxy, SocketProxy, NoProxy, PublicKey, PrivateKey, and ARCH.`,
-		Args: cobra.NoArgs,
+		Args:    cobra.NoArgs,
+		Example: `sealvm values default`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t := values{}
 			prompt := "are you sure to set all values to default?"

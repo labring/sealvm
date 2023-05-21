@@ -19,8 +19,6 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	v1 "github.com/labring/sealvm/types/api/v1"
 
 	"github.com/labring/sealvm/pkg/utils/logger"
@@ -31,26 +29,16 @@ import (
 type Exec struct {
 	vm     *v1.VirtualMachine
 	ipList []string
-}
-
-func NewExecCmdFromRoles(vm *v1.VirtualMachine, roles string) (*Exec, error) {
-	var ipList []string
-	if roles == "" {
-		ipList = append(vm.GetALLIPList())
-	} else {
-		roleList := strings.Split(roles, ",")
-		for _, role := range roleList {
-			ipList = append(ipList, vm.GetIPSByRole(role)...)
-		}
-		if len(ipList) == 0 {
-			return nil, fmt.Errorf("failed to get ipList, please check your roles label")
-		}
-	}
-	return &Exec{vm: vm, ipList: ipList}, nil
+	client Interface
 }
 
 func NewExecCmdFromIPs(vm *v1.VirtualMachine, ips []string) (*Exec, error) {
-	return &Exec{vm: vm, ipList: ips}, nil
+	sshClient := NewSSHClient(&vm.Spec.SSH, true)
+	err := WaitSSHReady(sshClient, 6, ips...)
+	if err != nil {
+		return nil, err
+	}
+	return &Exec{vm: vm, ipList: ips, client: sshClient}, nil
 }
 
 func (e *Exec) RunCmd(cmd string) error {
@@ -58,11 +46,7 @@ func (e *Exec) RunCmd(cmd string) error {
 	for _, ipAddr := range e.ipList {
 		ip := ipAddr
 		eg.Go(func() error {
-			sshClient, sshErr := NewSSHByVirtualMachine(e.vm, true)
-			if sshErr != nil {
-				return sshErr
-			}
-			err := sshClient.CmdAsync(ip, cmd)
+			err := e.client.CmdAsync(ip, cmd)
 			if err != nil {
 				return err
 			}
@@ -80,11 +64,7 @@ func (e *Exec) RunCopy(srcFilePath, dstFilePath string) error {
 	for _, ipAddr := range e.ipList {
 		ip := ipAddr
 		eg.Go(func() error {
-			sshClient, sshErr := NewSSHByVirtualMachine(e.vm, true)
-			if sshErr != nil {
-				return sshErr
-			}
-			err := sshClient.Copy(ip, srcFilePath, dstFilePath)
+			err := e.client.Copy(ip, srcFilePath, dstFilePath)
 			if err != nil {
 				return err
 			}

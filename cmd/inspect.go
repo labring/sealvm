@@ -10,8 +10,9 @@ import (
 
 func newInspectCmd() *cobra.Command {
 	var inspectCmd = &cobra.Command{
-		Use:  "inspect",
-		Args: cobra.ExactArgs(1),
+		Use:   "inspect",
+		Short: "inspect the vm node",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			hostname := args[0]
 			i, err := process.NewInterfaceFromName(name)

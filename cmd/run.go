@@ -36,14 +36,12 @@ func newRunCmd() *cobra.Command {
 	vm := v1.VirtualMachine{}
 	val := template.NewValues()
 	var nodes string
-	var dev bool
 	//var defaultMount = fmt.Sprintf("%s:%s", path.Join(os.Getenv("GOPATH"), "src"), "/root/go/src")
 	var defaultImage string
-	var mounts []string
 	var runCmd = &cobra.Command{
-		Use:   "run",
-		Short: "Run cloud native vm nodes",
-		Long:  `sealvm run --nodes 1  20.04`,
+		Use:     "run",
+		Short:   "Run cloud native vm nodes",
+		Example: `sealvm run -n node:2,master:1`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			applier, err := apply.NewApplierFromArgs(&vm)
 			if err != nil {
@@ -81,10 +79,6 @@ func newRunCmd() *cobra.Command {
 			if err := checkInstall(vm.Spec.Type); err != nil {
 				return err
 			}
-			mountPoints, err := apply.ParseMounts(mounts)
-			if err != nil {
-				return errors.WithMessage(err, "parse mounts error")
-			}
 
 			nodeMap, err := apply.ParseNodes(nodes)
 			if err != nil {
@@ -93,9 +87,8 @@ func newRunCmd() *cobra.Command {
 
 			for n, node := range nodeMap {
 				vm.Spec.Hosts = append(vm.Spec.Hosts, v1.Host{
-					Role:   n,
-					Count:  node,
-					Mounts: mountPoints[n],
+					Role:  n,
+					Count: node,
 					Resources: map[string]string{
 						v1.CPUKey:  defaultCpuNum,
 						v1.DISKKey: defaultDiskGb,
@@ -128,10 +121,7 @@ func newRunCmd() *cobra.Command {
 	runCmd.Flags().StringVar(&vm.Spec.SSH.PkPasswd, "pk-passwd", "", "passphrase for decrypting a PEM encoded private key")
 	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVar(&vm.Name, "name", "default", "name of cluster to applied init action")
-
 	runCmd.Flags().StringVarP(&nodes, "nodes", "n", "", "number of nodes, eg: node:1,node2:2")
-	runCmd.Flags().StringSliceVarP(&mounts, "mounts", "m", []string{}, "mounts of nodes, eg: node@/home/user:/root/go/src")
-	runCmd.Flags().BoolVarP(&dev, "dev", "d", false, "number of dev")
 	return runCmd
 }
 
