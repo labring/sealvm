@@ -30,7 +30,7 @@ func newResetCmd() *cobra.Command {
 	vm := v1.VirtualMachine{}
 	var resetCmd = &cobra.Command{
 		Use:   "reset",
-		Short: "A brief description of your command",
+		Short: "reset the vm nodes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			applier, err := apply.NewApplierFromArgs(&vm)
 			if err != nil {

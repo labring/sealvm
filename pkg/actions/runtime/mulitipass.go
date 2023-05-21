@@ -19,11 +19,16 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/ssh"
 	"github.com/labring/sealvm/pkg/utils/exec"
+	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/util/errors"
+	"os"
+	"path"
 )
 
 type multiPassAction struct {
@@ -38,7 +43,13 @@ func (m *multiPassAction) Apply(action *v1.Action) error {
 	defer func() {
 		if err != nil {
 			action.Status.Phase = v1.ActionPhaseFailed
-			action.Status.Message = err.Error()
+			switch err.(type) {
+			case errors.Aggregate:
+				action.Status.Message = err.(errors.Aggregate).Error()
+			default:
+				action.Status.Message = err.Error()
+			}
+
 		}
 	}()
 	names, nameAndIPs := getNameAndIPs(action, m.vm)
@@ -47,6 +58,7 @@ func (m *multiPassAction) Apply(action *v1.Action) error {
 		logger.Warn("lookup names is empty")
 		return nil
 	}
+	logger.Info("lookup names: %v", nameAndIPs)
 	ips := make([]string, 0)
 	for _, name := range names {
 		if _, ok := nameAndIPs[name]; !ok {
@@ -60,32 +72,26 @@ func (m *multiPassAction) Apply(action *v1.Action) error {
 		return err
 	}
 	m.client = execClient
+	fns := []func(names []string, data v1.ActionData) error{
+		m.Mount,
+		m.UnMount,
+		m.Exec,
+		m.Copy,
+		m.CopyContent,
+	}
+	errArr := make([]error, 0)
 	for _, data := range action.Spec.Data {
-		if data.ActionMount != nil {
-			if err = m.Mount(names, data); err != nil {
-				return err
+		for _, fn := range fns {
+			fnErr := fn(names, data)
+			if fnErr != nil {
+				errArr = append(errArr, fnErr)
+				break
 			}
 		}
-		if data.ActionUmount != "" {
-			if err = m.UnMount(names, data); err != nil {
-				return err
-			}
-		}
-		if data.ActionExec != "" {
-			if err = m.Exec(names, data); err != nil {
-				return err
-			}
-		}
-		if data.ActionCopy != nil {
-			if err = m.Copy(names, data); err != nil {
-				return err
-			}
-		}
-		if data.ActionCopyContent != nil {
-			if err = m.CopyContent(names, data); err != nil {
-				return err
-			}
-		}
+	}
+	if len(errArr) > 0 {
+		err = errors.NewAggregate(errArr)
+		return err
 	}
 	action.Status.Phase = v1.ActionPhaseComplete
 	return nil
@@ -93,18 +99,17 @@ func (m *multiPassAction) Apply(action *v1.Action) error {
 
 func (m *multiPassAction) Mount(names []string, data v1.ActionData) error {
 	if data.ActionMount == nil {
-		logger.Warn("mount data is nil")
 		return nil
 	}
 	if data.ActionMount.Source == "" || data.ActionMount.Target == "" {
-		logger.Warn("mount data is empty source or target")
-		return nil
+		return fmt.Errorf("mount data is empty source or target")
 	}
 	eg, _ := errgroup.WithContext(context.Background())
 
 	for _, name := range names {
 		name := name
 		eg.Go(func() error {
+			logger.Debug("mount %s %s:%s", data.ActionMount.Source, name, data.ActionMount.Target)
 			return m.mount(name, data.ActionMount.Source, data.ActionMount.Target)
 		})
 	}
@@ -112,7 +117,6 @@ func (m *multiPassAction) Mount(names []string, data v1.ActionData) error {
 }
 func (m *multiPassAction) UnMount(names []string, data v1.ActionData) error {
 	if data.ActionUmount == "" {
-		logger.Warn("unmount data is nil")
 		return nil
 	}
 	eg, _ := errgroup.WithContext(context.Background())
@@ -120,31 +124,46 @@ func (m *multiPassAction) UnMount(names []string, data v1.ActionData) error {
 	for _, name := range names {
 		name := name
 		eg.Go(func() error {
+			logger.Debug("unmount %s:%s", name, data.ActionUmount)
 			return m.unmount(name, data.ActionUmount)
 		})
 	}
 	return eg.Wait()
 }
-func (*multiPassAction) Exec(names []string, data v1.ActionData) error {
+func (m *multiPassAction) Exec(names []string, data v1.ActionData) error {
 	if data.ActionExec == "" {
-		logger.Warn("exec data is nil")
 		return nil
 	}
-	return nil
+	logger.Debug("names %+v,exec %s", names, data.ActionExec)
+	return m.client.RunCmd(data.ActionExec)
 }
-func (*multiPassAction) Copy(names []string, data v1.ActionData) error {
+func (m *multiPassAction) Copy(names []string, data v1.ActionData) error {
 	if data.ActionCopy == nil {
-		logger.Warn("copy data is nil")
 		return nil
 	}
-	return nil
+	if data.ActionCopy.Source == "" || data.ActionCopy.Target == "" {
+		return fmt.Errorf("copy data is empty source or target")
+	}
+	logger.Debug("names %+v,copy from %s to %s", names, data.ActionCopy.Source, data.ActionCopy.Target)
+	return m.client.RunCopy(data.ActionCopy.Source, data.ActionCopy.Target)
 }
-func (*multiPassAction) CopyContent(names []string, data v1.ActionData) error {
+func (m *multiPassAction) CopyContent(_ []string, data v1.ActionData) error {
 	if data.ActionCopyContent == nil {
-		logger.Warn("copy content data is nil")
 		return nil
 	}
-	return nil
+	if data.ActionCopyContent.Target == "" {
+		return fmt.Errorf("copy data is empty target")
+	}
+	tmpDir := path.Join(configs.DefaultRootfsDir(), "tmp")
+	_ = os.MkdirAll(tmpDir, 0755)
+	newDir, _ := fileutil.MkTmpdir(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(newDir)
+	}()
+	newFile := path.Join(newDir, "action-generator.sh")
+	_ = fileutil.WriteFile(newFile, []byte(data.ActionCopyContent.Content))
+	logger.Debug("copy content to %s", data.ActionCopyContent.Target)
+	return m.client.RunCopy(newFile, data.ActionCopyContent.Target)
 }
 func (m *multiPassAction) mount(name, src, target string) error {
 	cmd := fmt.Sprintf("multipass mount %s %s:%s", src, name, target)

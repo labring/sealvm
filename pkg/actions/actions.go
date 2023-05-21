@@ -19,6 +19,7 @@ package actions
 import (
 	"fmt"
 	"github.com/labring/sealvm/pkg/actions/runtime"
+	"github.com/labring/sealvm/pkg/utils/confirm"
 	"github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	yutil "github.com/labring/sealvm/pkg/utils/yaml"
@@ -36,12 +37,21 @@ func Do(name, p string) error {
 	if err != nil {
 		return err
 	}
+	logger.Info("action yamls: %s", string(data))
+	if yes, err := confirm.Confirm("Are you sure to run this command?", "you have canceled to exec action !"); err != nil {
+		return err
+	} else {
+		if !yes {
+			return fmt.Errorf("you have canceled to exec action ")
+		}
+	}
 	yamls := yutil.ToYalms(string(data))
 	actions := make([]v1.Action, 0)
 	for _, y := range yamls {
 		action := v1.Action{}
 		err = yaml.Unmarshal([]byte(y), &action)
 		if err != nil {
+			logger.Warn("unmarshal action error: %v", err)
 			continue
 		}
 		actions = append(actions, action)
@@ -56,7 +66,6 @@ func Do(name, p string) error {
 		if err = r.Apply(&action); err != nil {
 			logger.Error("apply action %d error: %v", index, err)
 			errArr = append(errArr, err)
-			continue
 		}
 		newActions = append(newActions, action)
 	}
@@ -66,8 +75,8 @@ func Do(name, p string) error {
 	logger.Info("outActionfile: %s", string(outActionfile))
 
 	if len(errArr) > 0 {
-		err = errors.NewAggregate(errArr)
-		return err
+		logger.Error("apply actions error: %v", errors.NewAggregate(errArr).Error())
+		return nil
 	}
 	return nil
 }
@@ -111,7 +120,7 @@ func PrintDefault() error {
 				},
 				{
 					ActionCopyContent: &v1.ContentAndTarget{
-						Content: "write code",
+						Content: "write code\ndfff",
 						Target:  "/target",
 					},
 				},

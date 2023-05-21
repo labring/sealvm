@@ -15,6 +15,7 @@
 package v1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,7 +30,7 @@ type SourceAndTarget struct {
 }
 
 type ContentAndTarget struct {
-	Content string `json:"source,omitempty"`
+	Content string `json:"content,omitempty"`
 	Target  string `json:"target,omitempty"`
 }
 
@@ -44,6 +45,11 @@ type ActionData struct {
 	ActionCopy *SourceAndTarget `json:"copy,omitempty"`
 	// ActionCopyContent copy file content
 	ActionCopyContent *ContentAndTarget `json:"copyContent,omitempty"`
+}
+
+func (a *ActionData) String() string {
+	return fmt.Sprintf("ActionMount: %v, ActionUmount: %v, ActionExec: %v, ActionCopy: %v, ActionCopyContent: %v",
+		a.ActionMount, a.ActionUmount, a.ActionExec, a.ActionCopy, a.ActionCopyContent)
 }
 
 // ActionSpec defines the desired state of Action
