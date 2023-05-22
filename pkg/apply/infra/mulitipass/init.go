@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/labring/sealvm/pkg/configs"
@@ -117,14 +118,19 @@ func (r *MultiPassVirtualMachine) CreateVMs(infra *v1.VirtualMachine) {
 	}
 	defer r.saveCondition(infra, configCondition)
 
+	var mu sync.Mutex // 添加一个互斥锁
 	eg, _ := errgroup.WithContext(context.Background())
-
+	sleep := 0
 	for _, host := range infra.Spec.Hosts {
-		for i := 0; i < host.Count; i++ {
+		for j := 0; j < host.Count; j++ {
 			dHost := host
-			index := i
+			index := j
 			eg.Go(func() error {
-				d := time.Duration(index) * time.Second
+				mu.Lock() // 加锁
+				sleep++
+				d := time.Duration(sleep) * time.Second
+				mu.Unlock() // 释放锁
+				logger.Debug("Start to create a new vm: role=%s,index=%d,sleep=%d", dHost.Role, index, sleep)
 				time.Sleep(d)
 				logger.Info("Start to create a new vm:", dHost.Role, index)
 				return r.CreateVM(infra, &dHost, index)
