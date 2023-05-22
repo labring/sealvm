@@ -1,4 +1,13 @@
-### how to using it in your project
+### how to using it
+
+Run sealvm command to install multipass vms
+
+[//]: # (asciinema rec demo.cast)
+[//]: # (asciinema upload)
+[//]: # (asciinema upload demo.cast)
+[//]: # (asciinema auth)
+
+[![asciicast](https://asciinema.org/a/586393.svg)](https://asciinema.org/a/586393)
 
 - install vm tools
 ```shell
