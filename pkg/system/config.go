@@ -95,6 +95,11 @@ var configOptions = []ConfigOption{
 		Description:  "sealvm default image local",
 		DefaultValue: "",
 	},
+	{
+		Key:          DefaultProvider,
+		Description:  "sealvm default provider",
+		DefaultValue: "multipass",
+	},
 }
 
 const (
@@ -102,6 +107,7 @@ const (
 	DefaultMemKey   = "default_mem"
 	DefaultDISKKey  = "default_disk"
 	DefaultImageKey = "default_image"
+	DefaultProvider = "default_provider"
 )
 
 var defaultDir = path.Join(configs.DefaultRootfsDir(), "etc")

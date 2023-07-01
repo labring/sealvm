@@ -19,6 +19,7 @@ package process
 import (
 	"errors"
 	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/system"
 	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
@@ -29,10 +30,11 @@ func NewInterfaceFromName(name string) (Interface, error) {
 		return nil, err
 	}
 	i := cf.GetVirtualMachine()
-	switch i.Spec.Type {
+	defaultProvider, _ := system.Get(system.DefaultProvider)
+	switch defaultProvider {
 	case v1.MultipassType:
 		return &mulitipass{vm: i}, nil
 	default:
-		return nil, errors.New("not support type:" + i.Spec.Type)
+		return nil, errors.New("not support type:" + defaultProvider)
 	}
 }

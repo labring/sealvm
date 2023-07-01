@@ -76,7 +76,7 @@ func newRunCmd() *cobra.Command {
 			if strings.Contains(vm.Name, "-") {
 				return fmt.Errorf("your cluster name contains chart '-' ")
 			}
-			if err := checkInstall(vm.Spec.Type); err != nil {
+			if err := checkProvider(); err != nil {
 				return err
 			}
 
@@ -119,7 +119,6 @@ func newRunCmd() *cobra.Command {
 		},
 	}
 	runCmd.Flags().StringVar(&vm.Spec.SSH.PkPasswd, "pk-passwd", "", "passphrase for decrypting a PEM encoded private key")
-	runCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	runCmd.Flags().StringVar(&vm.Name, "name", "default", "name of cluster to applied init action")
 	runCmd.Flags().StringVarP(&nodes, "nodes", "n", "", "number of nodes, eg: node:1,node2:2")
 	return runCmd

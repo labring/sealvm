@@ -18,6 +18,7 @@ package infra
 
 import (
 	"fmt"
+	"github.com/labring/sealvm/pkg/system"
 
 	"github.com/labring/sealvm/pkg/apply/infra/mulitipass"
 	"github.com/labring/sealvm/pkg/apply/runtime"
@@ -28,8 +29,9 @@ import (
 )
 
 func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
-	if infra.Spec.Type != v1.MultipassType {
-		return nil, fmt.Errorf("infra type %s is not supported", infra.Spec.Type)
+	defaultProvider, _ := system.Get(system.DefaultProvider)
+	if defaultProvider != v1.MultipassType {
+		return nil, fmt.Errorf("infra type %s is not supported", defaultProvider)
 	}
 	if !infra.DeletionTimestamp.IsZero() && infra.CreationTimestamp.IsZero() {
 		logger.Debug("fix VirtualMachine creationTimestamp")

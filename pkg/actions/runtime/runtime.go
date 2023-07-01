@@ -19,6 +19,7 @@ package runtime
 import (
 	"errors"
 	"github.com/labring/sealvm/pkg/process"
+	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
@@ -76,11 +77,12 @@ func NewAction(name string) (Runtime, error) {
 		return nil, err
 	}
 	if i.VMInfo() != nil {
-		switch i.VMInfo().Spec.Type {
+		defaultProvider, _ := system.Get(system.DefaultProvider)
+		switch defaultProvider {
 		case v1.MultipassType:
 			return &multiPassAction{vm: i.VMInfo()}, nil
 		default:
-			return nil, errors.New("action not support type:" + i.VMInfo().Spec.Type)
+			return nil, errors.New("action not support type:" + defaultProvider)
 		}
 	}
 	return nil, errors.New("load vm config error")

@@ -46,7 +46,7 @@ func newResetCmd() *cobra.Command {
 					return errors.New("cancelled")
 				}
 			}
-			if err := checkInstall(vm.Spec.Type); err != nil {
+			if err := checkProvider(); err != nil {
 				return err
 			}
 			t := metav1.Now()
@@ -55,7 +55,6 @@ func newResetCmd() *cobra.Command {
 		},
 	}
 	resetCmd.Flags().StringVarP(&vm.Name, "name", "n", "default", "name of cluster to applied init action")
-	resetCmd.Flags().StringVarP(&vm.Spec.Type, "type", "t", v1.MultipassType, "choose a type of infra, multipass")
 	return resetCmd
 }
 func init() {

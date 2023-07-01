@@ -21,13 +21,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const MultipassType = "Multipass"
+const MultipassType = "multipass"
 
 // VirtualMachineSpec defines the desired state of VirtualMachine
 type VirtualMachineSpec struct {
 	Hosts []Host `json:"hosts,omitempty"`
 	SSH   SSH    `json:"ssh"`
-	Type  string `json:"provider,omitempty"`
 }
 
 type SSH struct {
