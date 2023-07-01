@@ -50,7 +50,7 @@ sealvm action -f action.yaml --debug
 
 ## 系统管理命令
 
-### 安装(install)
+### 安装(install) 新版本废弃(v0.2.0)
 
 该命令用于安装虚拟机相关的工具。使用格式如下：
 

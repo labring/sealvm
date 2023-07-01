@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package vm
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 )
 
 func TestMultiPassVirtualMachine_Get(t *testing.T) {
-	//r := &MultiPassVirtualMachine{}
+	//r := &VirtualMachine{}
 	//_, err := r.Get("aa", "cc", 1)
 	//if err != nil {
 	//	t.Errorf(err.Error())

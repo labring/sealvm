@@ -81,6 +81,8 @@ func NewAction(name string) (Runtime, error) {
 		switch defaultProvider {
 		case v1.MultipassType:
 			return &multiPassAction{vm: i.VMInfo()}, nil
+		case v1.OrbType:
+			return &orbAction{multiPassAction{vm: i.VMInfo()}}, nil
 		default:
 			return nil, errors.New("action not support type:" + defaultProvider)
 		}

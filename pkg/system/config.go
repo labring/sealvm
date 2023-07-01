@@ -21,10 +21,22 @@ import (
 	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/yaml"
+	v1 "github.com/labring/sealvm/types/api/v1"
 	"path"
 )
 
 type envSystemConfig struct{}
+
+func GetDefaultImage() (string, error) {
+	defaultProvider, _ := Get(DefaultProvider)
+	switch defaultProvider {
+	case v1.MultipassType:
+		return "release:22.04", nil
+	case v1.OrbType:
+		return "ubuntu:jammy", nil
+	}
+	return "", nil
+}
 
 func Get(key string) (string, error) {
 	return globalConfig.getValue(key)
@@ -91,11 +103,6 @@ var configOptions = []ConfigOption{
 		DefaultValue: "50",
 	},
 	{
-		Key:          DefaultImageKey,
-		Description:  "sealvm default image local",
-		DefaultValue: "",
-	},
-	{
 		Key:          DefaultProvider,
 		Description:  "sealvm default provider",
 		DefaultValue: "multipass",
@@ -106,7 +113,6 @@ const (
 	DefaultCPUKey   = "default_cpu"
 	DefaultMemKey   = "default_mem"
 	DefaultDISKKey  = "default_disk"
-	DefaultImageKey = "default_image"
 	DefaultProvider = "default_provider"
 )
 

@@ -22,6 +22,7 @@ import (
 )
 
 const MultipassType = "multipass"
+const OrbType = "orbctl"
 
 // VirtualMachineSpec defines the desired state of VirtualMachine
 type VirtualMachineSpec struct {

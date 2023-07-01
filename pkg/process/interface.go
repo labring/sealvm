@@ -25,3 +25,19 @@ type Interface interface {
 	Inspect(name string)
 	VMInfo() *v1.VirtualMachine
 }
+
+type defaultProcess struct {
+	vm *v1.VirtualMachine
+}
+
+func (mp *defaultProcess) List() error {
+	return printVMs(mp.vm)
+}
+
+func (mp *defaultProcess) Inspect(name string) {
+	inspectHostname(mp.vm, name)
+}
+
+func (mp *defaultProcess) VMInfo() *v1.VirtualMachine {
+	return mp.vm
+}

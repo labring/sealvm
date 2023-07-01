@@ -14,24 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package process
+package vm
 
 import (
+	"github.com/labring/sealvm/pkg/apply/runtime"
+	"github.com/labring/sealvm/pkg/configs"
 	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
-type mulitipass struct {
-	vm *v1.VirtualMachine
+type VirtualMachine struct {
+	Desired  *v1.VirtualMachine
+	Current  *v1.VirtualMachine
+	Config   configs.Interface
+	DiffFunc runtime.Diff
+	Interface
 }
 
-func (mp *mulitipass) List() error {
-	return printVMs(mp.vm)
-}
-
-func (mp *mulitipass) Inspect(name string) {
-	inspectHostname(mp.vm, name)
-}
-
-func (mp *mulitipass) VMInfo() *v1.VirtualMachine {
-	return mp.vm
+type Interface interface {
+	CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error
+	DeleteVM(infra *v1.VirtualMachine, host *v1.VirtualMachineHostStatus) error
+	Get(name, role string, index int) (string, error)
+	List() (string, error)
+	GetById(name string) (string, error)
+	Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error)
 }

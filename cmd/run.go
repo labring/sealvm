@@ -42,6 +42,7 @@ func newRunCmd() *cobra.Command {
 		Use:     "run",
 		Short:   "Run cloud native vm nodes",
 		Example: `sealvm run -n node:2,master:1`,
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			applier, err := apply.NewApplierFromArgs(&vm)
 			if err != nil {
@@ -50,13 +51,16 @@ func newRunCmd() *cobra.Command {
 			return applier.Apply()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := checkProvider(); err != nil {
+				return err
+			}
 			system.List()
 			template.NewTpl().List()
 			template.NewValues().List()
 			if len(args) != 0 {
 				defaultImage = args[0]
 			} else {
-				newDefaultImage, err := apply.GetDefaultImage()
+				newDefaultImage, err := system.GetDefaultImage()
 				if err != nil {
 					return err
 				}
@@ -75,9 +79,6 @@ func newRunCmd() *cobra.Command {
 			logger.Debug("default disk memory is %s", defaultMemoryGb)
 			if strings.Contains(vm.Name, "-") {
 				return fmt.Errorf("your cluster name contains chart '-' ")
-			}
-			if err := checkProvider(); err != nil {
-				return err
 			}
 
 			nodeMap, err := apply.ParseNodes(nodes)

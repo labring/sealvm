@@ -17,22 +17,18 @@ limitations under the License.
 package infra
 
 import (
+	"errors"
 	"fmt"
-	"github.com/labring/sealvm/pkg/system"
-
-	"github.com/labring/sealvm/pkg/apply/infra/mulitipass"
+	"github.com/labring/sealvm/pkg/apply/infra/vm"
 	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/configs"
+	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
-	defaultProvider, _ := system.Get(system.DefaultProvider)
-	if defaultProvider != v1.MultipassType {
-		return nil, fmt.Errorf("infra type %s is not supported", defaultProvider)
-	}
 	if !infra.DeletionTimestamp.IsZero() && infra.CreationTimestamp.IsZero() {
 		logger.Debug("fix VirtualMachine creationTimestamp")
 		t := metav1.Now()
@@ -48,14 +44,22 @@ func NewDefaultVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (r
 	if !infra.CreationTimestamp.IsZero() && err != nil {
 		return nil, err
 	}
-	return newMultiPassVirtualMachine(infra, cf)
+	return newVirtualMachine(infra, cf)
 }
 
-func newMultiPassVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
-	dr := &mulitipass.MultiPassVirtualMachine{
+func newVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.Interface, error) {
+	dr := &vm.VirtualMachine{
 		Desired: infra,
 		Current: cf.GetVirtualMachine(),
 		Config:  cf,
+	}
+	defaultProvider, _ := system.Get(system.DefaultProvider)
+	switch defaultProvider {
+	case v1.MultipassType:
+		dr.Interface = vm.NewMultipass()
+	case v1.OrbType:
+	default:
+		return nil, errors.New("infra vm not support type:" + defaultProvider)
 	}
 	return &driver{Infra: dr}, nil
 }
