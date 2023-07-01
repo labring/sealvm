@@ -58,6 +58,7 @@ func newVirtualMachine(infra *v1.VirtualMachine, cf configs.Interface) (runtime.
 	case v1.MultipassType:
 		dr.Interface = vm.NewMultipass()
 	case v1.OrbType:
+		dr.Interface = vm.NewOrb()
 	default:
 		return nil, errors.New("infra vm not support type:" + defaultProvider)
 	}

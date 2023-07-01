@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dustin/go-humanize"
+	"github.com/labring/sealvm/pkg/ssh"
 	"github.com/labring/sealvm/pkg/utils/exec"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/strings"
@@ -62,6 +63,55 @@ func (r *multipass) List() (string, error) {
 		return "", errors.New("not found list instances")
 	}
 	return out, nil
+}
+func (r *multipass) InspectByList(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
+	type ListData struct {
+		List []struct {
+			Ipv4    []string `json:"ipv4"`
+			Name    string   `json:"name"`
+			Release string   `json:"release"`
+			State   string   `json:"state"`
+		} `json:"list"`
+	}
+
+	data, err := r.List()
+	if err != nil {
+		return nil, err
+	}
+	var outStruct ListData
+	err = json.Unmarshal([]byte(data), &outStruct)
+	if err != nil {
+		return nil, errors2.Wrap(err, "decode out json from local vm info failed")
+	}
+
+	for _, l := range outStruct.List {
+		if l.Name == strings.GetID(name, role.Role, index) {
+			newIPs := make([]string, 0)
+			if len(l.Ipv4) > 0 {
+				for _, ip := range l.Ipv4 {
+					if strings2.HasPrefix(ip, "172.17") || strings2.HasPrefix(ip, "10.96") {
+						continue
+					} else {
+						newIPs = append(newIPs, ip)
+					}
+				}
+			}
+
+			return &v1.VirtualMachineHostStatus{
+				State:     l.State,
+				Role:      role.Role,
+				ID:        strings.GetID(name, role.Role, index),
+				IPs:       newIPs,
+				ImageID:   "",
+				ImageName: l.Release,
+				Capacity:  nil,
+				Used:      map[string]string{},
+				Mounts:    map[string]string{},
+				Index:     index,
+			}, nil
+		}
+	}
+	return nil, errors.New("not found this instance")
 }
 
 func (r *multipass) GetById(name string) (string, error) {
@@ -141,4 +191,16 @@ func (r *multipass) Inspect(name string, role v1.Host, index int) (*v1.VirtualMa
 	}
 
 	return hostStatus, nil
+}
+func (r *multipass) PingVmsForHosts(infra *v1.VirtualMachine, hosts []v1.VirtualMachineHostStatus) error {
+	client := ssh.NewSSHClient(&infra.Spec.SSH, true)
+	var ips []string
+	for _, host := range hosts {
+		ips = append(ips, host.IPs[0])
+	}
+	err := ssh.WaitSSHReady(client, 6, ips...)
+	if err != nil {
+		return err
+	}
+	return nil
 }

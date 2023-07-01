@@ -34,7 +34,8 @@ type Interface interface {
 	CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error
 	DeleteVM(infra *v1.VirtualMachine, host *v1.VirtualMachineHostStatus) error
 	Get(name, role string, index int) (string, error)
-	List() (string, error)
+	InspectByList(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error)
 	GetById(name string) (string, error)
 	Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error)
+	PingVmsForHosts(infra *v1.VirtualMachine, hosts []v1.VirtualMachineHostStatus) error
 }

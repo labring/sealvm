@@ -22,7 +22,7 @@ import (
 )
 
 const MultipassType = "multipass"
-const OrbType = "orbctl"
+const OrbType = "orb"
 
 // VirtualMachineSpec defines the desired state of VirtualMachine
 type VirtualMachineSpec struct {
@@ -71,6 +71,16 @@ type Condition struct {
 	Reason string `json:"reason,omitempty"`
 	// +optional
 	Message string `json:"message,omitempty"`
+}
+
+func (s *VirtualMachineHostStatus) IsRunning() bool {
+	if s.State == "Running" {
+		return true
+	}
+	if s.State == "running" {
+		return true
+	}
+	return false
 }
 
 type VirtualMachineHostStatus struct {

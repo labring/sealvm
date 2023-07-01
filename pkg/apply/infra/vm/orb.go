@@ -19,7 +19,7 @@ package vm
 import (
 	"errors"
 	"fmt"
-	"github.com/dustin/go-humanize"
+	"github.com/labring/sealvm/pkg/configs"
 	"github.com/labring/sealvm/pkg/utils/exec"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/strings"
@@ -27,7 +27,8 @@ import (
 	errors2 "github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
-	"strconv"
+	"os"
+	"path"
 	strings2 "strings"
 )
 
@@ -40,13 +41,14 @@ type orb struct {
 
 func (r *orb) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error {
 	cfg := GetCloudInitYamlByRole(infra.Name, host.Role)
-	debugFlag := ""
-	if logger.IsDebugMode() {
-		debugFlag = "-vvv"
-	}
+	cloudCfg := cloudInit(cfg)
+	scriptPath := path.Join(configs.GetEtcDir(infra.Name), fmt.Sprintf("%s.sh", host.Role))
+	_ = os.WriteFile(scriptPath, []byte(cloudCfg.toScript()), 0755)
+	logger.Info("cloud init to bash success")
 	vmID := strings.GetID(infra.Name, host.Role, index)
 	if _, err := r.GetById(vmID); err != nil {
-		cmd := fmt.Sprintf("multipass launch --name %s --cpus %s --mem %sG --disk %sG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
+		//orb create %[1]s %[2]s && orb -m %[2]s -u root %[3]s
+		cmd := fmt.Sprintf("orb create %[1]s %[2]s && orb -m %[2]s -u root %[3]s", host.Image, strings.GetID(infra.Name, host.Role, index), scriptPath)
 		logger.Info("executing... %s \n", cmd)
 		return exec.Cmd("bash", "-c", cmd)
 	}
@@ -55,14 +57,14 @@ func (r *orb) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int) error
 
 func (r *orb) DeleteVM(infra *v1.VirtualMachine, host *v1.VirtualMachineHostStatus) error {
 	if _, err := r.GetById(host.ID); err == nil {
-		cmd := fmt.Sprintf("multipass stop %s && multipass delete -p   %s ", host.ID, host.ID)
+		cmd := fmt.Sprintf("orbctl delete -f %s", host.ID)
 		return exec.Cmd("bash", "-c", cmd)
 	}
 	return nil
 }
 
 func (r *orb) Get(name, role string, index int) (string, error) {
-	cmd := fmt.Sprintf("multipass info %s --format=json", strings.GetID(name, role, index))
+	cmd := fmt.Sprintf("orb info %s --format json", strings.GetID(name, role, index))
 	out, _ := exec.RunBashCmd(cmd)
 	if out == "" {
 		return "", errors.New("not found instance")
@@ -70,25 +72,113 @@ func (r *orb) Get(name, role string, index int) (string, error) {
 	return out, nil
 }
 
-func (r *orb) List() (string, error) {
-	cmd := fmt.Sprintf("multipass list --format json")
+type Image struct {
+	Distro  string `json:"distro"`
+	Version string `json:"version"`
+	Arch    string `json:"arch"`
+	Variant string `json:"variant"`
+}
+
+type InspectData struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Image    Image  `json:"image"`
+	Isolated bool   `json:"isolated"`
+	Builtin  bool   `json:"builtin"`
+	State    string `json:"state"`
+}
+
+var imgName = func(i *Image) string {
+	return fmt.Sprintf("%s:%s %s", i.Distro, i.Version, i.Arch)
+}
+
+func (r *orb) getIPs(name string) ([]string, error) {
+	ipv4 := fmt.Sprintf(`orb run -m %s ip -4 addr show | grep global | awk '{print $2}'`, name)
+	ipv6 := fmt.Sprintf(`orb run -m %s ip -6 addr show | grep global | awk '{print $2}'`, name)
+	ipv4Out, _ := exec.RunBashCmd(ipv4)
+	ipv6Out, _ := exec.RunBashCmd(ipv6)
+	if ipv4Out == "" && ipv6Out == "" {
+		return nil, errors.New("not found ip")
+	}
+	ips := make([]string, 0)
+	if ipv4Out != "" {
+		ipv4OutArr := strings.SplitRemoveEmpty(ipv4Out, "/")
+		if len(ipv4OutArr) > 0 {
+			ipv4Out = ipv4OutArr[0]
+		}
+		ips = append(ips, strings.TrimSpaceWS(ipv4Out))
+	}
+	if ipv6Out != "" {
+		ipv6OutArr := strings.SplitRemoveEmpty(ipv6Out, "/")
+		if len(ipv6OutArr) > 0 {
+			ipv6Out = ipv6OutArr[0]
+		}
+		ips = append(ips, strings.TrimSpaceWS(ipv6Out))
+	}
+	return ips, nil
+}
+
+func (r *orb) InspectByList(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
+	type InspectByList []InspectData
+	cmd := fmt.Sprintf("orb list --format json")
 	out, _ := exec.RunBashCmd(cmd)
 	if out == "" {
-		return "", errors.New("not found list instances")
+		return nil, errors.New("not found list instances")
 	}
-	return out, nil
+	var outStruct InspectByList
+	err := json.Unmarshal([]byte(out), &outStruct)
+	if err != nil {
+		return nil, errors2.Wrap(err, "decode out json from local vm info failed")
+	}
+
+	for _, l := range outStruct {
+		if l.Name == strings.GetID(name, role.Role, index) {
+			newIPs := make([]string, 0)
+			newIPs = append(newIPs, fmt.Sprintf("%s@orb", l.Name))
+			ips, _ := r.getIPs(l.Name)
+			if len(ips) > 0 {
+				newIPs = append(newIPs, ips...)
+			}
+			return &v1.VirtualMachineHostStatus{
+				State:     l.State,
+				Role:      role.Role,
+				ID:        strings.GetID(name, role.Role, index),
+				IPs:       newIPs,
+				ImageID:   "",
+				ImageName: imgName(&l.Image),
+				Capacity:  nil,
+				Used:      map[string]string{},
+				Mounts:    map[string]string{},
+				Index:     index,
+			}, nil
+		}
+	}
+	return nil, errors.New("not found this instance")
 }
 
 func (r *orb) GetById(name string) (string, error) {
-	cmd := fmt.Sprintf("multipass info %s --format=json", name)
+	cmd := fmt.Sprintf("orb info %s --format json", name)
 	out, _ := exec.RunBashCmd(cmd)
-	if out == "" || strings2.Contains(out, "does not exist") {
+	if out == "" || strings2.Contains(out, "machine not found") {
 		return "", errors.New("not found instance")
 	}
 	return out, nil
 }
 
 func (r *orb) Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
+	//	{
+	//	 "id": "01H48FEKCCNFHMB5NRKBFAKZ3R",
+	//	 "name": "new-ubuntu",
+	//	 "image": {
+	//	   "distro": "ubuntu",
+	//	   "version": "jammy",
+	//	   "arch": "arm64",
+	//	   "variant": "default"
+	//	 },
+	//	 "isolated": false,
+	//	 "builtin": false,
+	//	 "state": "running"
+	//	}
 	info, err := r.Get(name, role.Role, index)
 	if err != nil {
 		return nil, err
@@ -96,7 +186,7 @@ func (r *orb) Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineH
 	var outStruct map[string]interface{}
 	err = json.Unmarshal([]byte(info), &outStruct)
 	if err != nil {
-		return nil, errors2.Wrap(err, "decode out json from multipass info failed")
+		return nil, errors2.Wrap(err, "decode out json from orb info failed")
 	}
 	hostStatus := &v1.VirtualMachineHostStatus{
 		State:     "",
@@ -110,36 +200,32 @@ func (r *orb) Inspect(name string, role v1.Host, index int) (*v1.VirtualMachineH
 		Mounts:    map[string]string{},
 	}
 
-	memUsed, _, _ := unstructured.NestedInt64(outStruct, "info", hostStatus.ID, "memory", "used")
-	diskUsed, _, _ := unstructured.NestedString(outStruct, "info", hostStatus.ID, "disks", "sda1", "used")
-	cpuUsed, _, _ := unstructured.NestedSlice(outStruct, "info", hostStatus.ID, "load")
-	logger.Debug("memUsed:", memUsed, "diskUsed:", diskUsed, "cpuUsed:", cpuUsed)
-	hostStatus.Used[v1.MEMKey] = humanize.Bytes(uint64(memUsed))
-	diskUsedInt, _ := strconv.Atoi(diskUsed)
-	hostStatus.Used[v1.DISKKey] = humanize.Bytes(uint64(diskUsedInt))
-	hostStatus.Used[v1.CPUKey] = fmt.Sprintf("%v", cpuUsed)
 	hostStatus.Capacity = role.Resources
-	hostStatus.State, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "state")
-	hostStatus.ImageID, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "image_hash")
-	hostStatus.ImageName, _, _ = unstructured.NestedString(outStruct, "info", hostStatus.ID, "release")
+	hostStatus.State, _, _ = unstructured.NestedString(outStruct, "state")
+	imageName, _, _ := unstructured.NestedString(outStruct, "image", "distro")
+	imageVersion, _, _ := unstructured.NestedString(outStruct, "image", "version")
+	imageArch, _, _ := unstructured.NestedString(outStruct, "image", "arch")
+	hostStatus.ImageName = fmt.Sprintf("%s:%s %s", imageName, imageVersion, imageArch)
+
 	hostStatus.IPs, _, _ = unstructured.NestedStringSlice(outStruct, "info", hostStatus.ID, "ipv4")
 	newIPs := make([]string, 0)
-	if len(hostStatus.IPs) > 0 {
-		for _, ip := range hostStatus.IPs {
-			if strings2.HasPrefix(ip, "172.17") || strings2.HasPrefix(ip, "10.96") {
-				continue
-			} else {
-				newIPs = append(newIPs, ip)
-			}
-		}
+	newIPs = append(newIPs, fmt.Sprintf("%s@orb", hostStatus.ID))
+	ips, _ := r.getIPs(hostStatus.ID)
+	if len(ips) > 0 {
+		newIPs = append(newIPs, ips...)
 	}
 	hostStatus.IPs = newIPs
 	hostStatus.Index = index
-	mounts, _, _ := unstructured.NestedMap(outStruct, "info", hostStatus.ID, "mounts")
-	for k := range mounts {
-		hostMount, _, _ := unstructured.NestedString(outStruct, "info", hostStatus.ID, "mounts", k, "source_path")
-		hostStatus.Mounts[hostMount] = k
-	}
-
 	return hostStatus, nil
+}
+
+func (r *orb) PingVmsForHosts(infra *v1.VirtualMachine, hosts []v1.VirtualMachineHostStatus) error {
+	for _, host := range hosts {
+		cmd := fmt.Sprintf(`orb run -m %s ip addr`, host.ID)
+		out, _ := exec.RunBashCmd(cmd)
+		if out == "" {
+			return fmt.Errorf("vm %s is not ready", host.ID)
+		}
+	}
+	return nil
 }

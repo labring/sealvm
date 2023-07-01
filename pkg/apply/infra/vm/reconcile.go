@@ -18,21 +18,17 @@ package vm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
-	strings2 "strings"
 	"time"
 
 	"github.com/labring/sealvm/pkg/apply/runtime"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
-	errors2 "github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	v12 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 func (r *VirtualMachine) Reconcile(diff runtime.Diff) {
@@ -137,54 +133,4 @@ func (r *VirtualMachine) DeleteVMs(infra *v1.VirtualMachine) {
 		return
 	}
 
-}
-
-func (r *VirtualMachine) InspectByList(name string, role v1.Host, index int) (*v1.VirtualMachineHostStatus, error) {
-	type ListData struct {
-		List []struct {
-			Ipv4    []string `json:"ipv4"`
-			Name    string   `json:"name"`
-			Release string   `json:"release"`
-			State   string   `json:"state"`
-		} `json:"list"`
-	}
-
-	data, err := r.List()
-	if err != nil {
-		return nil, err
-	}
-	var outStruct ListData
-	err = json.Unmarshal([]byte(data), &outStruct)
-	if err != nil {
-		return nil, errors2.Wrap(err, "decode out json from local vm info failed")
-	}
-
-	for _, l := range outStruct.List {
-		if l.Name == strings.GetID(name, role.Role, index) {
-			newIPs := make([]string, 0)
-			if len(l.Ipv4) > 0 {
-				for _, ip := range l.Ipv4 {
-					if strings2.HasPrefix(ip, "172.17") || strings2.HasPrefix(ip, "10.96") {
-						continue
-					} else {
-						newIPs = append(newIPs, ip)
-					}
-				}
-			}
-
-			return &v1.VirtualMachineHostStatus{
-				State:     l.State,
-				Role:      role.Role,
-				ID:        strings.GetID(name, role.Role, index),
-				IPs:       newIPs,
-				ImageID:   "",
-				ImageName: l.Release,
-				Capacity:  nil,
-				Used:      map[string]string{},
-				Mounts:    map[string]string{},
-				Index:     index,
-			}, nil
-		}
-	}
-	return nil, errors.New("not found this instance")
 }

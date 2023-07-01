@@ -20,6 +20,7 @@ import (
 	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"github.com/modood/table"
+	strings2 "strings"
 )
 
 func printVMs(vm *v1.VirtualMachine) error {
@@ -27,7 +28,7 @@ func printVMs(vm *v1.VirtualMachine) error {
 		Name  string
 		State string
 		Role  string
-		Ipv4  []string
+		Ipv4  string
 		Image string
 	}
 	tables := make([]printTable, 0)
@@ -43,7 +44,7 @@ func printVMs(vm *v1.VirtualMachine) error {
 					})
 				} else {
 					tables = append(tables, printTable{
-						Ipv4:  status.IPs,
+						Ipv4:  strings2.Join(status.IPs, ","),
 						Name:  status.ID,
 						Image: status.ImageName,
 						State: status.State,

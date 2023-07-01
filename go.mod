@@ -16,6 +16,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	golang.org/x/crypto v0.3.0
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.3
 	k8s.io/client-go v0.25.0

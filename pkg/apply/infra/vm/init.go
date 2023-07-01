@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/labring/sealvm/pkg/configs"
-	"github.com/labring/sealvm/pkg/ssh"
 	"github.com/labring/sealvm/pkg/template"
 	fileutil "github.com/labring/sealvm/pkg/utils/file"
 	"github.com/labring/sealvm/pkg/utils/logger"
@@ -169,7 +168,7 @@ func (r *VirtualMachine) SyncVMs(infra *v1.VirtualMachine) {
 					}
 					info = newInfo
 				}
-				if info.State != "Running" {
+				if !info.IsRunning() {
 					return fmt.Errorf("instance %s is not running", infra.Name)
 				}
 				return nil
@@ -198,16 +197,15 @@ func (r *VirtualMachine) PingVms(infra *v1.VirtualMachine) {
 		LastHeartbeatTime: metav1.Now(),
 	}
 	defer r.saveCondition(infra, configCondition)
-	client := ssh.NewSSHClient(&infra.Spec.SSH, true)
-	var ips []string
+	var ips []v1.VirtualMachineHostStatus
 	for _, host := range infra.Status.Hosts {
-		if host.State != "Running" {
+		if !host.IsRunning() {
 			v1.SetConditionError(configCondition, "VMStatus", fmt.Errorf("vm status is not running"))
 			continue
 		}
-		ips = append(ips, host.IPs[0])
+		ips = append(ips, host)
 	}
-	err := ssh.WaitSSHReady(client, 6, ips...)
+	err := r.PingVmsForHosts(infra, ips)
 	if err != nil {
 		logger.Error("ping vms is error: %+v", err)
 		return
