@@ -52,7 +52,10 @@ func (m *orbAction) Exec(names []string, data v1.ActionData) error {
 
 	for _, name := range names {
 		for _, cmd := range strings.Split(data.ActionExec, "\n") {
-			_, err := exec.RunBashCmd(fmt.Sprintf("orb run -m %s -u root %s", name, cmd))
+			if strings.TrimSpace(cmd) == "" {
+				continue
+			}
+			err := exec.Cmd("/bin/bash", "-c", fmt.Sprintf("ssh root@%s@orb \"%s\"", name, cmd))
 			if err != nil {
 				return err
 			}
@@ -73,17 +76,9 @@ func (m *orbAction) Copy(names []string, data v1.ActionData) error {
 	for _, name := range names {
 		name := name
 		eg.Go(func() error {
-			out, err := exec.RunBashCmd(fmt.Sprintf("orb push -m %s %s %s;echo $?", name, data.ActionCopy.Source, data.ActionCopy.Target))
+			err := exec.Cmd("/bin/bash", "-c", fmt.Sprintf("scp %s root@%s@orb:%s", data.ActionCopy.Source, name, data.ActionCopy.Target))
 			if err != nil {
 				return err
-			}
-			execOut := strings.Split(strings.TrimSpace(out), "\n")
-			if len(execOut) != 2 {
-				return fmt.Errorf("failed to exec command, err: %v", execOut)
-			}
-			logger.Debug("push data out: %s", strings.TrimSpace(out))
-			if execOut[1] != "0" {
-				return fmt.Errorf("exit code is not zero: %v", execOut)
 			}
 			return nil
 		})
