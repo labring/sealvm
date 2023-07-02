@@ -1,0 +1,35 @@
+apiVersion: virtual-machine.sealos.io/v1
+kind: Action
+spec:
+  data:
+    - mount:
+        source: /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos
+        target: /root/go/src/github.com/labring/sealos
+    - exec: |
+        sudo apt-get -y update
+        sudo apt-get install -y make gcc-aarch64-linux-gnu gcc-x86-64-linux-gnu
+        sudo apt-get install -y ntpdate
+        sudo apt-get install -y git
+        sudo ntpdate -s ntp1.aliyun.com
+    - copyContent:
+        content: |
+          #!/bin/bash
+          version=1.20.1
+          arch=arm64
+          rm -rf /root/go${version}.linux-${arch}.tar.gz
+          wget https://studygolang.com/dl/golang/go${version}.linux-${arch}.tar.gz -O /root/go${version}.linux-${arch}.tar.gz
+          rm -rf /usr/local/go && tar -C /usr/local -zxvf /root/go${version}.linux-${arch}.tar.gz
+          echo "export PATH=\$PATH:/usr/local/go/bin" > /etc/profile.d/golang.sh
+          chmod 0755 /etc/profile.d/golang.sh
+          rm -rf /root/go${version}.linux-${arch}.tar.gz
+          mkdir -p /root/go/src/github.com/labring /root/go/bin /root/go/pkg
+          source /etc/profile.d/golang.sh
+          go env -w GOPROXY="https://goproxy.io,direct"
+        target: /root/golang-install.sh
+    - exec: |
+        bash /root/golang-install.sh
+        source /etc/profile.d/golang.sh && echo $PATH
+        git config --global --add safe.directory /root/go/src/github.com/labring/sealos
+        cd /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos &&  source /etc/profile.d/golang.sh &&  make build
+  ons:
+    - role: master

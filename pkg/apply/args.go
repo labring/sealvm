@@ -19,21 +19,12 @@ package apply
 import (
 	"errors"
 	"fmt"
-	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/template"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"strconv"
 	"strings"
 )
-
-func GetDefaultImage() (string, error) {
-	defaultImageLocal, _ := system.Get(system.DefaultImageKey)
-	if defaultImageLocal != "" {
-		return defaultImageLocal, nil
-	}
-	return "", nil
-}
 
 func ValidateTemplate(vm *v1.VirtualMachine) error {
 	if vm.Spec.SSH.PublicFile == "" {

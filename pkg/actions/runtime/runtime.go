@@ -25,10 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-type Runtime interface {
-	Apply(action *v1.Action) error
-}
-
 func getNameAndIPs(action *v1.Action, vm *v1.VirtualMachine) ([]string, map[string]string) {
 	if action == nil {
 		return nil, nil
@@ -69,19 +65,14 @@ func getNameAndIPs(action *v1.Action, vm *v1.VirtualMachine) ([]string, map[stri
 	return names.List(), data
 }
 
-func NewAction(name string) (Runtime, error) {
+func NewAction(name string) (*action, error) {
 	i, err := process.NewInterfaceFromName(name)
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
 	if i.VMInfo() != nil {
-		switch i.VMInfo().Spec.Type {
-		case v1.MultipassType:
-			return &multiPassAction{vm: i.VMInfo()}, nil
-		default:
-			return nil, errors.New("action not support type:" + i.VMInfo().Spec.Type)
-		}
+		return &action{vm: i.VMInfo()}, nil
 	}
 	return nil, errors.New("load vm config error")
 }

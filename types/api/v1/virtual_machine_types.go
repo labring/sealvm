@@ -21,13 +21,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const MultipassType = "Multipass"
+const MultipassType = "multipass"
+const OrbType = "orb"
 
 // VirtualMachineSpec defines the desired state of VirtualMachine
 type VirtualMachineSpec struct {
 	Hosts []Host `json:"hosts,omitempty"`
 	SSH   SSH    `json:"ssh"`
-	Type  string `json:"provider,omitempty"`
 }
 
 type SSH struct {
@@ -71,6 +71,16 @@ type Condition struct {
 	Reason string `json:"reason,omitempty"`
 	// +optional
 	Message string `json:"message,omitempty"`
+}
+
+func (s *VirtualMachineHostStatus) IsRunning() bool {
+	if s.State == "Running" {
+		return true
+	}
+	if s.State == "running" {
+		return true
+	}
+	return false
 }
 
 type VirtualMachineHostStatus struct {

@@ -1,5 +1,5 @@
 /*
-Copyright 2022 cuisongliu@qq.com.
+Copyright 2023 cuisongliu@qq.com.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mulitipass
+package vm
 
 import (
 	"testing"
-
-	"github.com/dustin/go-humanize"
 )
 
-func TestMultiPassVirtualMachine_Get(t *testing.T) {
-	//r := &MultiPassVirtualMachine{}
-	//_, err := r.Get("aa", "cc", 1)
-	//if err != nil {
-	//	t.Errorf(err.Error())
-	//	return
-	//}
-	t.Log(humanize.Bytes(uint64(1520263168)))
+func Test_cloudInit(t *testing.T) {
+	cfg := cloudInit("/Users/cuisongliu/.sealvm/etc/default/node.yaml")
+	if cfg == nil {
+		t.Error("cloudInit error")
+		return
+	}
+	t.Log(cfg.toScript())
 }

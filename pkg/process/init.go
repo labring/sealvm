@@ -17,9 +17,7 @@ limitations under the License.
 package process
 
 import (
-	"errors"
 	"github.com/labring/sealvm/pkg/configs"
-	v1 "github.com/labring/sealvm/types/api/v1"
 )
 
 func NewInterfaceFromName(name string) (Interface, error) {
@@ -29,10 +27,5 @@ func NewInterfaceFromName(name string) (Interface, error) {
 		return nil, err
 	}
 	i := cf.GetVirtualMachine()
-	switch i.Spec.Type {
-	case v1.MultipassType:
-		return &mulitipass{vm: i}, nil
-	default:
-		return nil, errors.New("not support type:" + i.Spec.Type)
-	}
+	return &defaultProcess{vm: i}, nil
 }

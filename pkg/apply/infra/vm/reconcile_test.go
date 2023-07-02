@@ -14,24 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package process
+package vm
 
 import (
-	v1 "github.com/labring/sealvm/types/api/v1"
+	"testing"
+
+	"github.com/dustin/go-humanize"
 )
 
-type mulitipass struct {
-	vm *v1.VirtualMachine
-}
-
-func (mp *mulitipass) List() error {
-	return printVMs(mp.vm)
-}
-
-func (mp *mulitipass) Inspect(name string) {
-	inspectHostname(mp.vm, name)
-}
-
-func (mp *mulitipass) VMInfo() *v1.VirtualMachine {
-	return mp.vm
+func TestMultiPassVirtualMachine_Get(t *testing.T) {
+	//r := &VirtualMachine{}
+	//_, err := r.Get("aa", "cc", 1)
+	//if err != nil {
+	//	t.Errorf(err.Error())
+	//	return
+	//}
+	t.Log(humanize.Bytes(uint64(1520263168)))
 }

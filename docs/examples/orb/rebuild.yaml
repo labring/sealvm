@@ -1,0 +1,10 @@
+apiVersion: virtual-machine.sealos.io/v1
+kind: Action
+spec:
+  data:
+  - exec: |
+      cd /Users/cuisongliu/Workspaces/go/src/github.com/labring/sealos &&  source /etc/profile.d/golang.sh &&  make build
+      cp bin/linux_arm64/sealos /usr/bin/
+      cp bin/linux_arm64/sealctl /usr/bin/
+  ons:
+  - role: master

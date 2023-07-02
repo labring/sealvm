@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/template"
+	"github.com/labring/sealvm/pkg/utils/exec"
 	"os"
 	"path"
 	"runtime"
@@ -81,7 +82,6 @@ func init() {
 		{
 			Message: "System Management Commands:",
 			Commands: []*cobra.Command{
-				newInstallCmd(),
 				system.NewConfigCmd(),
 				template.NewTemplateCmd(),
 				template.NewValuesCmd(),
@@ -108,4 +108,13 @@ func onBootOnDie() {
 		panic(1)
 	}
 	logger.CfgConsoleAndFileLogger(debug, path.Join(clusterRootDir, "logs"), "sealvm", false)
+}
+
+func checkProvider() error {
+	defaultProvider, _ := system.Get(system.DefaultProvider)
+	logger.Debug("default provider is %s", defaultProvider)
+	if p := exec.ExecutableFilePath(defaultProvider); p == "" {
+		return fmt.Errorf("provider %s not found", defaultProvider)
+	}
+	return nil
 }
