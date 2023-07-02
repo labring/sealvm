@@ -130,7 +130,7 @@ func (r *multipass) CreateVM(infra *v1.VirtualMachine, host *v1.Host, index int)
 	}
 	vmID := strings.GetID(infra.Name, host.Role, index)
 	if _, err := r.GetById(vmID); err != nil {
-		cmd := fmt.Sprintf("multipass launch --name %s --cpus %s --mem %sG --disk %sG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
+		cmd := fmt.Sprintf("multipass launch --name %s --cpus %s --memory %sG --disk %sG --cloud-init %s %s %s ", strings.GetID(infra.Name, host.Role, index), host.Resources[v1.CPUKey], host.Resources[v1.MEMKey], host.Resources[v1.DISKKey], cfg, debugFlag, host.Image)
 		logger.Info("executing... %s \n", cmd)
 		return exec.Cmd("bash", "-c", cmd)
 	}
