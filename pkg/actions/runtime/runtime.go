@@ -19,16 +19,11 @@ package runtime
 import (
 	"errors"
 	"github.com/labring/sealvm/pkg/process"
-	"github.com/labring/sealvm/pkg/system"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	"github.com/labring/sealvm/pkg/utils/strings"
 	v1 "github.com/labring/sealvm/types/api/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
-
-type Runtime interface {
-	Apply(action *v1.Action) error
-}
 
 func getNameAndIPs(action *v1.Action, vm *v1.VirtualMachine) ([]string, map[string]string) {
 	if action == nil {
@@ -70,22 +65,14 @@ func getNameAndIPs(action *v1.Action, vm *v1.VirtualMachine) ([]string, map[stri
 	return names.List(), data
 }
 
-func NewAction(name string) (Runtime, error) {
+func NewAction(name string) (*action, error) {
 	i, err := process.NewInterfaceFromName(name)
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
 	if i.VMInfo() != nil {
-		defaultProvider, _ := system.Get(system.DefaultProvider)
-		switch defaultProvider {
-		case v1.MultipassType:
-			return &multiPassAction{vm: i.VMInfo()}, nil
-		case v1.OrbType:
-			return &orbAction{multiPassAction{vm: i.VMInfo()}}, nil
-		default:
-			return nil, errors.New("action not support type:" + defaultProvider)
-		}
+		return &action{vm: i.VMInfo()}, nil
 	}
 	return nil, errors.New("load vm config error")
 }

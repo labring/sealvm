@@ -17,83 +17,79 @@ limitations under the License.
 package runtime
 
 import (
+	"context"
 	"fmt"
-	"github.com/labring/sealvm/pkg/ssh"
+	"github.com/labring/sealvm/pkg/utils/exec"
 	"github.com/labring/sealvm/pkg/utils/logger"
 	v1 "github.com/labring/sealvm/types/api/v1"
-	"k8s.io/apimachinery/pkg/util/errors"
+	"golang.org/x/sync/errgroup"
+	"strings"
 )
+
+func newOrbAction() Interface {
+	return &orbAction{}
+}
 
 type orbAction struct {
 	multiPassAction
 }
 
-func (m *orbAction) Apply(action *v1.Action) error {
-	action.Status.Phase = v1.ActionPhaseInProcess
-	var err error
-	defer func() {
-		if err != nil {
-			action.Status.Phase = v1.ActionPhaseFailed
-			switch err.(type) {
-			case errors.Aggregate:
-				action.Status.Message = err.(errors.Aggregate).Error()
-			default:
-				action.Status.Message = err.Error()
-			}
+func (m *orbAction) MountOnce(name, src, target string) error {
+	logger.Warn("orb does not need to support mount, it is mounted in the root directory by default")
+	return nil
+}
 
-		}
-	}()
-	names, nameAndIPs := getNameAndIPs(action, m.vm)
-	m.nameAndIp = nameAndIPs
-	if len(names) == 0 {
-		logger.Warn("lookup names is empty")
+func (m *orbAction) UnMountOnce(name, target string) error {
+	logger.Warn("orb does not need to support mount, it is mounted in the root directory by default")
+	return nil
+}
+
+func (m *orbAction) Exec(names []string, data v1.ActionData) error {
+	if data.ActionExec == "" {
 		return nil
 	}
-	logger.Info("lookup names: %v", nameAndIPs)
-	ips := make([]string, 0)
+	logger.Debug("names %+v,exec %s", names, data.ActionExec)
+
 	for _, name := range names {
-		if _, ok := nameAndIPs[name]; !ok {
-			return fmt.Errorf("name %s not found", name)
-		}
-		ips = append(ips, nameAndIPs[name])
-	}
-	var execClient *ssh.Exec
-	execClient, err = ssh.NewExecCmdFromIPs(m.vm, ips)
-	if err != nil {
-		return err
-	}
-	m.client = execClient
-	fns := []func(names []string, data v1.ActionData) error{
-		m.Mount,
-		m.UnMount,
-		m.Exec,
-		m.Copy,
-		m.CopyContent,
-	}
-	errArr := make([]error, 0)
-	for _, data := range action.Spec.Data {
-		for _, fn := range fns {
-			fnErr := fn(names, data)
-			if fnErr != nil {
-				errArr = append(errArr, fnErr)
-				break
+		for _, cmd := range strings.Split(data.ActionExec, "\n") {
+			_, err := exec.RunBashCmd(fmt.Sprintf("orb run -m %s -u root %s", name, cmd))
+			if err != nil {
+				return err
 			}
 		}
+
 	}
-	if len(errArr) > 0 {
-		err = errors.NewAggregate(errArr)
-		return err
-	}
-	action.Status.Phase = v1.ActionPhaseComplete
 	return nil
 }
-
-func (m *orbAction) mount(name, src, target string) error {
-	logger.Warn("orb does not need to support mount, it is mounted in the root directory by default")
-	return nil
-}
-
-func (m *orbAction) unmount(name, target string) error {
-	logger.Warn("orb does not need to support mount, it is mounted in the root directory by default")
+func (m *orbAction) Copy(names []string, data v1.ActionData) error {
+	if data.ActionCopy == nil {
+		return nil
+	}
+	if data.ActionCopy.Source == "" || data.ActionCopy.Target == "" {
+		return fmt.Errorf("copy data is empty source or target")
+	}
+	logger.Debug("names %+v,copy from %s to %s", names, data.ActionCopy.Source, data.ActionCopy.Target)
+	eg, _ := errgroup.WithContext(context.Background())
+	for _, name := range names {
+		name := name
+		eg.Go(func() error {
+			out, err := exec.RunBashCmd(fmt.Sprintf("orb push -m %s %s %s;echo $?", name, data.ActionCopy.Source, data.ActionCopy.Target))
+			if err != nil {
+				return err
+			}
+			execOut := strings.Split(strings.TrimSpace(out), "\n")
+			if len(execOut) != 2 {
+				return fmt.Errorf("failed to exec command, err: %v", execOut)
+			}
+			logger.Debug("push data out: %s", strings.TrimSpace(out))
+			if execOut[1] != "0" {
+				return fmt.Errorf("exit code is not zero: %v", execOut)
+			}
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("failed to exec command, err: %v", err)
+	}
 	return nil
 }
